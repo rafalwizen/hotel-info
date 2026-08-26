@@ -13,12 +13,15 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
+  // Always start a FRESH dev server per run: the app keeps in-memory state
+  // (login rate limiter buckets) that must not leak between test runs.
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
         command: "npm run dev",
         url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-        stdout: "ignore",
+        reuseExistingServer: false,
+        stdout: "pipe",
+        timeout: 120_000,
       },
 });
