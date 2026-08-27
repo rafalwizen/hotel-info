@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BedDouble,
   LayoutTemplate,
+  QrCode,
   Settings,
   Sparkles,
 } from "lucide-react";
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/panel/pokoje", label: "Pokoje", icon: BedDouble },
   { href: "/panel/szablon-pokoi", label: "Szablon pokoi", icon: LayoutTemplate },
   { href: "/panel/udogodnienia", label: "Udogodnienia", icon: Sparkles },
+  { href: "/panel/qr", label: "Kody QR", icon: QrCode },
   { href: "/panel/ustawienia", label: "Ustawienia", icon: Settings },
 ] as const;
 
