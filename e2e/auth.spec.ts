@@ -16,7 +16,8 @@ test.describe("auth flow", () => {
     await page.getByRole("button", { name: "Utwórz konto" }).click();
 
     // No hotel yet — the panel routes redirect to the onboarding wizard.
-    await expect(page).toHaveURL(/\/panel\/start$/);
+    // Cold dev server: first signup pays the route-compilation cost.
+    await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
     // CardTitle renders as a div (shadcn) — assert on text, not heading role.
     // Reaching /panel/start already proves the session (proxy redirects
     // anonymous users to /zaloguj).

@@ -25,7 +25,8 @@ export async function createHotel(
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Hasło").fill("supertajne8");
   await page.getByRole("button", { name: "Utwórz konto" }).click();
-  await expect(page).toHaveURL(/\/panel\/start$/);
+  // Cold dev server: the first signup compiles the route + action round trip
+  await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
 
   const hotelName = `E2E Hotel ${stamp}`;
   await page.getByPlaceholder("np. Willa Mazury").fill(hotelName);
@@ -37,7 +38,7 @@ export async function createHotel(
   }
   await page.getByRole("button", { name: "Utwórz hotel" }).click();
 
-  await expect(page).toHaveURL(/\/panel\/pokoje$/);
+  await expect(page).toHaveURL(/\/panel\/pokoje$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Pokoje" })).toBeVisible();
 
   return { email, hotelName, slug: `e2e-hotel-${stamp}` };
@@ -50,6 +51,6 @@ export async function createRoom(page: Page, number: string, namePl = "Pokój te
   await page.getByPlaceholder("Polski").first().fill(namePl);
   await page.getByRole("button", { name: "Utwórz pokój" }).click();
 
-  await expect(page).toHaveURL(/\/panel\/pokoje\/[0-9a-f-]+$/);
+  await expect(page).toHaveURL(/\/panel\/pokoje\/[0-9a-f-]+$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: `Pokój ${number}` })).toBeVisible();
 }
