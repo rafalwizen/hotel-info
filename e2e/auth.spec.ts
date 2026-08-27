@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createHotel } from "./helpers";
 
 /**
  * Self-contained tests: each test generates its own email INSIDE the test
@@ -64,10 +65,10 @@ test.describe("auth flow", () => {
     await page.getByLabel("Hasło").fill("zle-haslo");
     await page.getByRole("button", { name: "Zaloguj się" }).click();
 
-    // The in-memory rate limiter keys by IP and its buckets live as long as
-    // the dev-server process — repeated suite runs against one server can
-    // legitimately trip it, so both error outcomes are accepted here.
-    // Limiter logic itself is covered by unit tests.
+    // The limiter counts FAILED attempts only (successes clear the bucket),
+    // but its buckets live as long as the dev-server process — repeated
+    // suite runs against one server can still legitimately trip it, so both
+    // error outcomes are accepted. Bucket logic is covered by unit tests.
     await expect(
       page.getByText(/Nieprawidłowy e-mail lub hasło\.|Zbyt wiele prób logowania/),
     ).toBeVisible();
@@ -75,25 +76,6 @@ test.describe("auth flow", () => {
 });
 
 test.describe("onboarding + room crud", () => {
-  /** Sign up and create a hotel; returns after landing on the rooms list. */
-  async function createHotel(page: import("@playwright/test").Page) {
-    const email = `e2e-hotel-${Date.now()}@hotelinfo.test`;
-    await page.goto("/rejestracja");
-    await page.getByLabel("Imię").fill("E2E Owner");
-    await page.getByLabel("E-mail").fill(email);
-    await page.getByLabel("Hasło").fill("supertajne8");
-    await page.getByRole("button", { name: "Utwórz konto" }).click();
-    await expect(page).toHaveURL(/\/panel\/start$/);
-
-    // Unique hotel name => unique slug (shared Neon database across runs)
-    const hotelName = `E2E Hotel ${Date.now()}`;
-    await page.getByPlaceholder("np. Willa Mazury").fill(hotelName);
-    await page.getByRole("button", { name: "Utwórz hotel" }).click();
-
-    await expect(page).toHaveURL(/\/panel\/pokoje$/);
-    await expect(page.getByRole("heading", { name: "Pokoje" })).toBeVisible();
-  }
-
   test("onboarding creates hotel with auto slug and lands on rooms", async ({ page }) => {
     await createHotel(page);
 
