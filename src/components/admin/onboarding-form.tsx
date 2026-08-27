@@ -68,10 +68,11 @@ export function OnboardingForm({ guestBase }: { guestBase: string }) {
           <LocalizedInput name="name" label="Nazwa hotelu" required placeholderPl="np. Willa Mazury" />
 
           <div className="space-y-1.5">
-            <Label>
+            <Label htmlFor="onboarding-slug">
               Adres strony (slug) <span className="text-destructive">*</span>
             </Label>
             <Input
+              id="onboarding-slug"
               placeholder="np. willa-mazury"
               {...form.register("slug")}
               onChange={(e) => {
@@ -92,23 +93,23 @@ export function OnboardingForm({ guestBase }: { guestBase: string }) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Sieć Wi-Fi (SSID)</Label>
-              <Input placeholder="np. Hotel-Gosc" {...form.register("wifiSsid")} />
+              <Label htmlFor="onboarding-wifi-ssid">Sieć Wi-Fi (SSID)</Label>
+              <Input id="onboarding-wifi-ssid" placeholder="np. Hotel-Gosc" {...form.register("wifiSsid")} />
             </div>
             <div className="space-y-1.5">
-              <Label>Hasło Wi-Fi</Label>
-              <Input placeholder="hasło dla gości" {...form.register("wifiPassword")} />
+              <Label htmlFor="onboarding-wifi-password">Hasło Wi-Fi</Label>
+              <Input id="onboarding-wifi-password" placeholder="hasło dla gości" {...form.register("wifiPassword")} />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Telefon</Label>
-              <Input placeholder="+48 ..." {...form.register("phone")} />
+              <Label htmlFor="onboarding-phone">Telefon</Label>
+              <Input id="onboarding-phone" placeholder="+48 ..." {...form.register("phone")} />
             </div>
             <div className="space-y-1.5">
-              <Label>E-mail</Label>
-              <Input type="email" placeholder="recepcja@hotel.pl" {...form.register("email")} />
+              <Label htmlFor="onboarding-email">E-mail</Label>
+              <Input id="onboarding-email" type="email" placeholder="recepcja@hotel.pl" {...form.register("email")} />
             </div>
             <div className="space-y-1.5">
               <Label>Kolor marki</Label>
@@ -123,8 +124,8 @@ export function OnboardingForm({ guestBase }: { guestBase: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Adres</Label>
-            <Input placeholder="ul. Jeziorna 1, 11-500 Wilkasy" {...form.register("addressLine")} />
+            <Label htmlFor="onboarding-address">Adres</Label>
+            <Input id="onboarding-address" placeholder="ul. Jeziorna 1, 11-500 Wilkasy" {...form.register("addressLine")} />
           </div>
 
             <SubmitButton pendingLabel="Tworzenie hotelu…">Utwórz hotel</SubmitButton>

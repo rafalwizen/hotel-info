@@ -20,6 +20,16 @@ export const SECTION_ICONS: ReadonlyArray<{ value: string; label: string }> = [
   { value: "shirt", label: "Pranie" },
   { value: "check", label: "Dostępne" },
   { value: "no-symbols", label: "Zakazy" },
+  { value: "air-vent", label: "Wentylacja / klimatyzacja" },
+  { value: "lock", label: "Sejf" },
+  { value: "shower-head", label: "Prysznic" },
+  { value: "fridge", label: "Lodówka" },
+  { value: "dog", label: "Zwierzęta" },
+  { value: "bell-ring", label: "Recepcja / dzwonek" },
+  { value: "croissant", label: "Śniadanie" },
+  { value: "car", label: "Dojazd / samochód" },
+  { value: "moon", label: "Cisza nocna / sen" },
+  { value: "waves", label: "Jacuzzi / basen" },
 ] as const;
 
 export const DEFAULT_ICON = "info";
