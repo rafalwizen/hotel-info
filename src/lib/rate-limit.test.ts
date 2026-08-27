@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { rateLimit, resetRateLimits } from "./rate-limit";
+import { clearRateLimit, rateLimit, resetRateLimits } from "./rate-limit";
 
 describe("rateLimit", () => {
   it("allows requests up to the limit and blocks afterwards", () => {
@@ -33,5 +33,17 @@ describe("rateLimit", () => {
     expect(rateLimit("login:c", 5, windowMs).allowed).toBe(true);
 
     vi.useRealTimers();
+  });
+
+  it("clearRateLimit drops the bucket — the login success path", () => {
+    resetRateLimits();
+    for (let i = 0; i < 5; i++) rateLimit("login:d", 5, 15 * 60 * 1000);
+    expect(rateLimit("login:d", 5, 15 * 60 * 1000).allowed).toBe(false);
+
+    clearRateLimit("login:d");
+    expect(rateLimit("login:d", 5, 15 * 60 * 1000).allowed).toBe(true);
+
+    // Other buckets untouched
+    expect(rateLimit("login:e", 5, 15 * 60 * 1000).allowed).toBe(true);
   });
 });

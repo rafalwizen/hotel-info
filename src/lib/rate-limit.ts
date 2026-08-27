@@ -43,6 +43,11 @@ export function rateLimit(
   return { allowed: true, retryAfterSec: 0 };
 }
 
+/** Drop one bucket — used when an attempt succeeds (see loginAction). */
+export function clearRateLimit(key: string): void {
+  buckets.delete(key);
+}
+
 /** Test helper. */
 export function resetRateLimits(): void {
   buckets.clear();

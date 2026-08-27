@@ -8,7 +8,7 @@ import { passwordResetTokens, users } from "@/db/schema";
 import { signIn } from "@/lib/auth";
 import { verifyCredentials } from "@/lib/credentials";
 import { hashPassword } from "@/lib/password";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, clearRateLimit } from "@/lib/rate-limit";
 import { sendEmail, passwordResetEmailHtml } from "@/lib/email";
 import {
   loginSchema,
@@ -18,8 +18,9 @@ import {
   type AuthActionState,
 } from "@/lib/validation/auth";
 
-// Counts ALL attempts (successes included) per IP: hotel staff often share one office IP.
-const LOGIN_LIMIT = 10;
+// Failed attempts only: a success clears the bucket, so staff sharing one
+// office IP never lock each other out while brute force stays capped.
+const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -88,11 +89,8 @@ export async function loginAction(
     return { error: firstFieldError(parsed.error) ?? "Sprawdź poprawność danych" };
   }
 
-  const { allowed, retryAfterSec } = rateLimit(
-    `login:${await clientIp()}`,
-    LOGIN_LIMIT,
-    LOGIN_WINDOW_MS,
-  );
+  const limiterKey = `login:${await clientIp()}`;
+  const { allowed, retryAfterSec } = rateLimit(limiterKey, LOGIN_LIMIT, LOGIN_WINDOW_MS);
   if (!allowed) {
     return {
       error: `Zbyt wiele prób logowania. Spróbuj ponownie za ${Math.ceil(retryAfterSec / 60)} min.`,
@@ -105,6 +103,9 @@ export async function loginAction(
   if (!user) {
     return { error: "Nieprawidłowy e-mail lub hasło." };
   }
+
+  // Success clears the bucket — only failures count towards the limit.
+  clearRateLimit(limiterKey);
 
   const redirectTo = safeNextPath(formData.get("next"));
   await signIn("credentials", {
