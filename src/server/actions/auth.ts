@@ -18,7 +18,8 @@ import {
   type AuthActionState,
 } from "@/lib/validation/auth";
 
-const LOGIN_LIMIT = 5;
+// Counts ALL attempts (successes included) per IP: hotel staff often share one office IP.
+const LOGIN_LIMIT = 10;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 

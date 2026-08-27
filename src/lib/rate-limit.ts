@@ -1,10 +1,11 @@
 /**
  * In-memory fixed-window rate limiter.
  *
- * CAVEAT: module memory is NOT shared across requests — `next dev`
- * (Turbopack) isolates module state per render worker, and Vercel
- * serverless functions each have their own memory. This is a best-effort
- * first layer; swap for Upstash Redis before relying on it in production.
+ * CAVEAT: buckets live in module memory, i.e. PER PROCESS. State IS shared
+ * across requests handled by one process (observed with warm `next dev`),
+ * but NOT across multiple serverless instances or render workers — so under
+ * load the effective limit multiplies. This is a best-effort first layer;
+ * swap for Upstash Redis before relying on it in production.
  * Correctness of the bucket logic itself is covered by unit tests.
  */
 type Bucket = { count: number; resetAt: number };
