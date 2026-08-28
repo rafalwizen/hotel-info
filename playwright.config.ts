@@ -1,11 +1,14 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices, type ReporterDescription } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // HTML report is uploaded as a CI artifact on failure (see ci.yml).
+  reporter: process.env.CI
+    ? ([["github"], ["html", { open: "never" }]] satisfies ReporterDescription[])
+    : "list",
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
