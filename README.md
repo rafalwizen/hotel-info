@@ -82,7 +82,9 @@ Until both exist, PRs are gated by `verify` alone.
    ```
 
    ⚠️ `db:seed` wipes all data — never run it against production.
-5. **Cron**: `vercel.json` pings `/api/health` hourly to keep Neon compute warm.
+5. **Cron**: none for now — the Hobby plan only allows daily crons and Neon
+   auto-wakes on first request (~0.5s cold start). On Pro, re-add an hourly
+   `/api/health` ping in `vercel.json` to keep compute warm.
 6. **Post-deploy checks**: `/api/health` returns `{"ok":true}`, signup → onboarding
    works, QR previews in the panel show the production QR domain.
 
