@@ -10,7 +10,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "zaloguj",
   "rejestracja",
   "reset-hasla",
-  // Marketing routes planned for Phase 6
+  // Marketing routes
   "cennik",
   "kontakt",
   // Infra / well-known paths that must never resolve to a hotel
