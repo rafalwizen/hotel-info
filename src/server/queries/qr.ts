@@ -16,7 +16,7 @@ import { resolveGuestBaseUrl } from "@/lib/qr";
 export async function guestBaseUrl(): Promise<string> {
   const h = await headers();
   return resolveGuestBaseUrl(
-    process.env.NEXT_PUBLIC_GUEST_BASE_URL,
+    process.env.GUEST_BASE_URL,
     h.get("x-forwarded-proto") ?? "http",
     h.get("host") ?? "localhost:3000",
   );

@@ -59,7 +59,7 @@ export default async function RoomEditorPage({
 
   const templates = templateStates(templateRows, sectionRows);
   const extras = extraSections(sectionRows);
-  const guestBase = (process.env.NEXT_PUBLIC_GUEST_BASE_URL ?? "http://localhost:3000").replace(
+  const guestBase = (process.env.GUEST_BASE_URL ?? "http://localhost:3000").replace(
     /\/$/,
     "",
   );

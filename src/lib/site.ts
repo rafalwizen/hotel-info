@@ -8,6 +8,6 @@ export const CONTACT_EMAIL = "kontakt@hotelinfo.pl";
 
 /**
  * Short QR domain shown on marketing mockups (sticker illustrations).
- * Purely illustrative — real stickers use NEXT_PUBLIC_GUEST_BASE_URL.
+ * Purely illustrative — real stickers use GUEST_BASE_URL.
  */
 export const DEMO_STICKER_DOMAIN = "go.hotelinfo.pl";

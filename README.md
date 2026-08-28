@@ -71,7 +71,7 @@ Until both exist, PRs are gated by `verify` alone.
 2. **Environment variables** (Production, same for Preview if you want working previews):
    - `DATABASE_URL` — Neon **pooled** connection string (`-pooler` host)
    - `AUTH_SECRET` — `npx auth secret`
-   - `NEXT_PUBLIC_GUEST_BASE_URL` — `https://<short-qr-domain>` (no trailing slash)
+   - `GUEST_BASE_URL` — `https://<short-qr-domain>` (no trailing slash)
    - `RESEND_API_KEY` / `EMAIL_FROM` — optional, password-reset email
 3. **Domains**: add both the app domain and the short QR domain to the project.
    Guest URLs are path-based on the same app, so no redirects are needed.
@@ -90,7 +90,7 @@ Until both exist, PRs are gated by `verify` alone.
 
 ## Domain notes
 
-Guest QR codes encode `NEXT_PUBLIC_GUEST_BASE_URL/{hotel-slug}/{room-slug}`. The
+Guest QR codes encode `GUEST_BASE_URL/{hotel-slug}/{room-slug}`. The
 short domain (4–7 chars) keeps the QR pattern simple, which matters at a 20mm
 sticker size. `src/lib/site.ts` holds marketing placeholder constants
 (`CONTACT_EMAIL`, `DEMO_STICKER_DOMAIN`) — update them once the domains are bought.

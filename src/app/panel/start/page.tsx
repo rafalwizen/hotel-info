@@ -19,7 +19,7 @@ export default async function StartPage() {
     .limit(1);
   if (membership) redirect("/panel/pokoje");
 
-  const guestBase = process.env.NEXT_PUBLIC_GUEST_BASE_URL ?? "http://localhost:3000";
+  const guestBase = process.env.GUEST_BASE_URL ?? "http://localhost:3000";
 
   return (
     <div className="flex flex-1 flex-col p-4 py-10">
