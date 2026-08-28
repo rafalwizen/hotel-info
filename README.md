@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hotel Info
 
-## Getting Started
+Multi-tenant SaaS for small hotels, guesthouses and farm stays (typical Booking.com
+listings). The owner prints a QR sticker for every room; the guest scans it and gets a
+mobile page with room-specific info (equipment how-tos) plus hotel info (wi-fi,
+breakfast, check-out) — bilingual PL/EN, no app, no login.
 
-First, run the development server:
+## Stack
+
+| Layer    | Choice                                                          |
+| -------- | --------------------------------------------------------------- |
+| Framework| Next.js 16 (App Router, TypeScript, Turbopack)                   |
+| DB       | Neon Postgres (`aws-eu-central-1`) + Drizzle ORM                 |
+| Auth     | Auth.js v5 (Credentials, JWT sessions)                           |
+| UI       | Tailwind v4; shadcn/ui in the panel, plain Tailwind for guests   |
+| QR       | `qrcode` — SVG for print, PNG ≥1024px for download, EC level M   |
+| Tests    | Vitest (unit) + Playwright (e2e, fresh dev server per run)       |
+
+## Local development
 
 ```bash
+cp .env.example .env        # fill DATABASE_URL (Neon branch) + AUTH_SECRET
+npm install
+npm run db:migrate          # apply drizzle/ migrations
+npm run db:seed             # optional: demo hotel (WILLA WIPE — dev only!)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Seed gives you `demo@hotelinfo.test` / `demo1234` and hotel `willa-mazury`
+(rooms 101, 102, apartament — old slug `201` redirects).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script              | Purpose                                    |
+| ------------------- | ------------------------------------------ |
+| `npm run dev`       | Dev server (Turbopack)                      |
+| `npm run build`     | Production build                            |
+| `npm run typecheck` | `tsc --noEmit`                              |
+| `npm run lint`      | ESLint                                      |
+| `npm run test`      | Vitest unit tests (no DB needed)            |
+| `npm run test:e2e`  | Playwright; boots a fresh dev server        |
+| `npm run db:*`      | drizzle-kit generate / migrate / studio, seed |
 
-## Learn More
+## Project rules (see AGENTS.md for the full list)
 
-To learn more about Next.js, take a look at the following resources:
+- Every admin/server query starts with `requireHotel()` and filters by `hotelId`.
+- URL ids are never trusted alone — always `and(eq(id), eq(hotelId))`, return 404.
+- Every admin mutation ends with `revalidatePath(`/${hotel.slug}`, "layout")`.
+- Any new top-level route must be added to `RESERVED_SLUGS` in `src/lib/slug.ts`.
+- Code comments / identifiers / commits: English. Admin UI: Polish. Guest pages: PL/EN.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## CI (GitHub Actions)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`.github/workflows/ci.yml` runs on every push/PR:
 
-## Deploy on Vercel
+1. **verify** — `npm ci → typecheck → lint → test → build` (no database).
+2. **e2e** (origin repo only) — creates a throwaway Neon branch, migrates, runs the
+   full Playwright suite against a dev server on that branch, deletes the branch,
+   uploads the HTML report on failure.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Required repository secrets for the e2e job:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `NEON_API_KEY` — Neon console → Account → API keys
+- `NEON_PROJECT_ID` — Neon console → project Settings
+
+Until both exist, PRs are gated by `verify` alone.
+
+## Deploy runbook (Vercel)
+
+1. **Import** the repo in Vercel (framework preset: Next.js, build command default).
+2. **Environment variables** (Production, same for Preview if you want working previews):
+   - `DATABASE_URL` — Neon **pooled** connection string (`-pooler` host)
+   - `AUTH_SECRET` — `npx auth secret`
+   - `NEXT_PUBLIC_GUEST_BASE_URL` — `https://<short-qr-domain>` (no trailing slash)
+   - `RESEND_API_KEY` / `EMAIL_FROM` — optional, password-reset email
+3. **Domains**: add both the app domain and the short QR domain to the project.
+   Guest URLs are path-based on the same app, so no redirects are needed.
+4. **First release migrations** (local terminal, against production DB):
+
+   ```bash
+   DATABASE_URL="<prod-pooled-url>" npm run db:migrate
+   ```
+
+   ⚠️ `db:seed` wipes all data — never run it against production.
+5. **Cron**: `vercel.json` pings `/api/health` hourly to keep Neon compute warm.
+6. **Post-deploy checks**: `/api/health` returns `{"ok":true}`, signup → onboarding
+   works, QR previews in the panel show the production QR domain.
+
+## Domain notes
+
+Guest QR codes encode `NEXT_PUBLIC_GUEST_BASE_URL/{hotel-slug}/{room-slug}`. The
+short domain (4–7 chars) keeps the QR pattern simple, which matters at a 20mm
+sticker size. `src/lib/site.ts` holds marketing placeholder constants
+(`CONTACT_EMAIL`, `DEMO_STICKER_DOMAIN`) — update them once the domains are bought.
