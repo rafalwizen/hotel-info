@@ -6,6 +6,7 @@ import type { GuestSection } from "@/components/guest/types";
 import {
   getHotelBySlug,
   getHotelSections,
+  getMergedArrivalSteps,
   getRoomAmenities,
   getRoomBySlug,
   getRoomSections,
@@ -77,10 +78,11 @@ export default async function RoomGuestPage({
   const room = resolution.room;
   if (!room) notFound();
 
-  const [sectionRows, amenityRows, hotelSectionRows] = await Promise.all([
+  const [sectionRows, amenityRows, hotelSectionRows, arrivalRows] = await Promise.all([
     getRoomSections(hotel.id, room.id),
     getRoomAmenities(hotel.id, room.id),
     getHotelSections(hotel.id),
+    getMergedArrivalSteps(hotel.id, room.id),
   ]);
 
   return (
@@ -110,6 +112,9 @@ export default async function RoomGuestPage({
           .filter((a) => a.label.pl.trim() || a.label.en.trim())
           .map((a) => ({ icon: a.icon, label: a.label })),
         hotelSections: toGuestSections(hotelSectionRows),
+        arrivalSteps: arrivalRows
+          .filter(hasContent)
+          .map((row) => ({ title: row.title, body: row.body, photoUrl: row.photoUrl })),
       }}
     />
   );

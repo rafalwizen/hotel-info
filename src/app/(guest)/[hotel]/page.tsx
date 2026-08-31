@@ -4,6 +4,7 @@ import { pick } from "@/lib/i18n";
 import { GuestHotelPage } from "@/components/guest/guest-hotel-page";
 import type { GuestSection } from "@/components/guest/types";
 import {
+  getArrivalSteps,
   getHotelBySlug,
   getHotelSections,
   getPublishedRooms,
@@ -66,9 +67,10 @@ export default async function HotelGuestPage({
   const hotel = await getHotelBySlug(slug);
   if (!hotel) notFound();
 
-  const [roomRows, sectionRows] = await Promise.all([
+  const [roomRows, sectionRows, arrivalRows] = await Promise.all([
     getPublishedRooms(hotel.id),
     getHotelSections(hotel.id),
+    getArrivalSteps(hotel.id),
   ]);
 
   return (
@@ -94,6 +96,9 @@ export default async function HotelGuestPage({
           maxGuests: room.maxGuests,
         })),
         sections: toGuestSections(sectionRows),
+        // The link renders only when the guide has something to say.
+        arrivalGuide:
+          arrivalRows.some(hasContent) || Boolean(hotel.arrivalMapUrl),
       }}
     />
   );

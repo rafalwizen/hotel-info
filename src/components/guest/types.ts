@@ -31,6 +31,12 @@ export type GuestAmenity = {
   label: Localized;
 };
 
+export type GuestArrivalStep = {
+  title: Localized;
+  body: Localized;
+  photoUrl: string | null;
+};
+
 export type GuestRoomLink = {
   number: string;
   slug: string;
@@ -44,6 +50,8 @@ export type HotelPagePayload = {
   hotel: GuestHotelInfo;
   rooms: GuestRoomLink[];
   sections: GuestSection[];
+  /** True when the shareable arrival guide has content (link rendered). */
+  arrivalGuide: boolean;
 };
 
 /** Payload of /(guest)/[hotel]/[room] — the sticker QR target. */
@@ -53,4 +61,27 @@ export type RoomPagePayload = {
   sections: GuestSection[];
   amenities: GuestAmenity[];
   hotelSections: GuestSection[];
+  /** Merged arrival steps — the block renders only when non-empty. */
+  arrivalSteps: GuestArrivalStep[];
+};
+
+/**
+ * Slim hotel shape for the arrival guide: it gets shared in Booking/SMS
+ * chats before arrival, so it carries no wi-fi credentials — only what a
+ * lost guest needs (name, address, phone to call).
+ */
+export type GuestArrivalHotel = {
+  slug: string;
+  name: Localized;
+  brandColor: string;
+  defaultLocale: Locale;
+  addressLine: string;
+  phone: string;
+};
+
+/** Payload of /(guest)/[hotel]/dojazd — the shareable arrival guide. */
+export type ArrivalPagePayload = {
+  hotel: GuestArrivalHotel;
+  steps: GuestArrivalStep[];
+  mapUrl: string | null;
 };

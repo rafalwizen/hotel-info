@@ -18,6 +18,13 @@ export type SectionData = Inheritable & {
   icon: string;
 };
 
+/** Arrival guide step (sequence matters; photo is optional). */
+export type ArrivalStepData = Inheritable & {
+  title: Localized;
+  body: Localized;
+  photoUrl: string | null;
+};
+
 const bySortOrder = (a: Inheritable, b: Inheritable) => a.sortOrder - b.sortOrder;
 
 /**

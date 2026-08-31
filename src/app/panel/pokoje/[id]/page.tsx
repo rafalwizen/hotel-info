@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/db";
 import {
   amenities,
+  arrivalSteps,
   roomAmenities,
   roomSections,
   rooms,
@@ -13,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RoomForm } from "@/components/admin/room-form";
 import { RoomAmenities } from "@/components/admin/room-amenities";
 import { RoomSections } from "@/components/admin/room-sections";
+import { RoomArrival } from "@/components/admin/room-arrival";
 
 type Params = { id: string };
 
@@ -33,32 +35,47 @@ export default async function RoomEditorPage({
     .limit(1);
   if (!room) notFound();
 
-  const [amenityRows, assignedRows, templateRows, sectionRows] = await Promise.all([
-    db
-      .select()
-      .from(amenities)
-      .where(eq(amenities.hotelId, hotel.id))
-      .orderBy(asc(amenities.sortOrder), asc(amenities.id)),
-    db
-      .select({ amenityId: roomAmenities.amenityId })
-      .from(roomAmenities)
-      .where(eq(roomAmenities.roomId, room.id)),
-    db
-      .select()
-      .from(roomSections)
-      .where(
-        and(eq(roomSections.hotelId, hotel.id), isNull(roomSections.roomId)),
-      )
-      .orderBy(asc(roomSections.sortOrder), asc(roomSections.id)),
-    db
-      .select()
-      .from(roomSections)
-      .where(eq(roomSections.roomId, room.id))
-      .orderBy(asc(roomSections.sortOrder), asc(roomSections.id)),
-  ]);
+  const [amenityRows, assignedRows, templateRows, sectionRows, arrivalTemplateRows, arrivalRoomRows] =
+    await Promise.all([
+      db
+        .select()
+        .from(amenities)
+        .where(eq(amenities.hotelId, hotel.id))
+        .orderBy(asc(amenities.sortOrder), asc(amenities.id)),
+      db
+        .select({ amenityId: roomAmenities.amenityId })
+        .from(roomAmenities)
+        .where(eq(roomAmenities.roomId, room.id)),
+      db
+        .select()
+        .from(roomSections)
+        .where(
+          and(eq(roomSections.hotelId, hotel.id), isNull(roomSections.roomId)),
+        )
+        .orderBy(asc(roomSections.sortOrder), asc(roomSections.id)),
+      db
+        .select()
+        .from(roomSections)
+        .where(eq(roomSections.roomId, room.id))
+        .orderBy(asc(roomSections.sortOrder), asc(roomSections.id)),
+      db
+        .select()
+        .from(arrivalSteps)
+        .where(
+          and(eq(arrivalSteps.hotelId, hotel.id), isNull(arrivalSteps.roomId)),
+        )
+        .orderBy(asc(arrivalSteps.sortOrder), asc(arrivalSteps.id)),
+      db
+        .select()
+        .from(arrivalSteps)
+        .where(eq(arrivalSteps.roomId, room.id))
+        .orderBy(asc(arrivalSteps.sortOrder), asc(arrivalSteps.id)),
+    ]);
 
   const templates = templateStates(templateRows, sectionRows);
   const extras = extraSections(sectionRows);
+  const arrivalTemplates = templateStates(arrivalTemplateRows, arrivalRoomRows);
+  const arrivalExtras = extraSections(arrivalRoomRows);
   const guestBase = (process.env.GUEST_BASE_URL ?? "http://localhost:3000").replace(
     /\/$/,
     "",
@@ -134,6 +151,23 @@ export default async function RoomEditorPage({
         </CardHeader>
         <CardContent>
           <RoomSections roomId={room.id} templates={templates} extras={extras} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dojazd</CardTitle>
+          <CardDescription>
+            Kroki instrukcji dojazdu z szablonu hotelu możesz nadpisać lub
+            ukryć tylko w tym pokoju — np. gdy ten pokój ma inne wejście.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RoomArrival
+            roomId={room.id}
+            templates={arrivalTemplates}
+            extras={arrivalExtras}
+          />
         </CardContent>
       </Card>
     </>

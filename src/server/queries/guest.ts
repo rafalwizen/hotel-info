@@ -3,6 +3,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
   amenities,
+  arrivalSteps,
   hotelSections,
   hotels,
   roomAmenities,
@@ -101,3 +102,33 @@ export const getRoomAmenities = cache(async (hotelId: string, roomId: string) =>
     .where(and(eq(amenities.hotelId, hotelId), eq(roomAmenities.roomId, roomId)))
     .orderBy(asc(amenities.sortOrder), asc(amenities.id)),
 );
+
+/** Enabled hotel-level arrival steps — the shareable /dojazd guide content. */
+export const getArrivalSteps = cache(async (hotelId: string) =>
+  db
+    .select()
+    .from(arrivalSteps)
+    .where(
+      and(
+        eq(arrivalSteps.hotelId, hotelId),
+        eq(arrivalSteps.enabled, true),
+        isNull(arrivalSteps.roomId),
+      ),
+    )
+    .orderBy(asc(arrivalSteps.sortOrder), asc(arrivalSteps.id)),
+);
+
+/**
+ * Arrival steps as the room page shows them: hotel templates merged with
+ * this room's overrides/extras (same inheritance rules as room sections).
+ */
+export const getMergedArrivalSteps = cache(async (hotelId: string, roomId: string) => {
+  const [templates, own] = await Promise.all([
+    db
+      .select()
+      .from(arrivalSteps)
+      .where(and(eq(arrivalSteps.hotelId, hotelId), isNull(arrivalSteps.roomId))),
+    db.select().from(arrivalSteps).where(eq(arrivalSteps.roomId, roomId)),
+  ]);
+  return mergeSections(templates, own);
+});

@@ -5,6 +5,7 @@ import { GuestHeader, useGuestLocale } from "@/components/guest/guest-locale";
 import { pick } from "@/lib/i18n";
 import { WifiCard } from "@/components/guest/wifi-card";
 import {
+  ArrivalLink,
   GuestFooter,
   HotelDetails,
   RoomsIndex,
@@ -49,6 +50,8 @@ export function GuestHotelPage({ payload }: { payload: HotelPagePayload }) {
           locale={locale}
           defaultOpen
         />
+
+        {payload.arrivalGuide && <ArrivalLink hotelSlug={hotel.slug} locale={locale} />}
 
         <RoomsIndex hotelSlug={hotel.slug} rooms={payload.rooms} locale={locale} />
 

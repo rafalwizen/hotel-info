@@ -27,6 +27,16 @@ export const GUEST_STRINGS = {
   floor: { pl: "piętro", en: "floor" },
   groundFloor: { pl: "parter", en: "ground floor" },
   guests: { pl: "os.", en: "guests" },
+  arrivalTitle: { pl: "Jak do nas trafić", en: "How to find us" },
+  arrivalHint: {
+    pl: "Instrukcja krok po kroku i mapa",
+    en: "Step-by-step directions and a map",
+  },
+  arrivalSteps: { pl: "Krok po kroku", en: "Step by step" },
+  arrivalBlock: { pl: "Jak dotrzeć", en: "How to get here" },
+  openInMaps: { pl: "Otwórz w Mapach", en: "Open in Maps" },
+  fullGuide: { pl: "Pełna instrukcja dojazdu", en: "Full arrival guide" },
+  callUs: { pl: "Zadzwoń do nas", en: "Call us" },
 } as const;
 
 export type GuestStringKey = keyof typeof GUEST_STRINGS;

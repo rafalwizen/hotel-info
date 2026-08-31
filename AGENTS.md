@@ -21,6 +21,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Guest pages live at `/(guest)/[hotel]/[room]`, i.e. they own EVERY top-level path segment that is not a static route. When adding ANY new top-level route (file or folder directly under `src/app/`), you MUST also add its slug to `RESERVED_SLUGS` in `src/lib/slug.ts`.
 
+## Reserved room slugs
+
+The same collision exists one level down: static routes directly under `src/app/(guest)/[hotel]/` (e.g. `/{hotel}/dojazd`) compete with room slugs. When adding ANY new second-level guest route, you MUST also add its slug to `RESERVED_ROOM_SLUGS` in `src/lib/slug.ts` (enforced by `roomSchema`).
+
 ## Language rules
 
 - Code comments, identifiers, commit messages: English.

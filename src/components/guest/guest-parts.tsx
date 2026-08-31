@@ -4,7 +4,12 @@ import type { Locale } from "@/lib/i18n";
 import { pick } from "@/lib/i18n";
 import { SectionIcon } from "@/components/icon";
 import { gs } from "@/components/guest/strings";
-import type { GuestAmenity, GuestRoomLink, GuestSection } from "@/components/guest/types";
+import type {
+  GuestAmenity,
+  GuestArrivalStep,
+  GuestRoomLink,
+  GuestSection,
+} from "@/components/guest/types";
 
 /**
  * Presentational guest-page parts. Visual language: hotel print ephemera —
@@ -210,6 +215,112 @@ export function HotelDetails({
             className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400 transition-colors hover:text-(--hotel-primary)"
           >
             {gs("backToHotel", locale)}
+          </Link>
+        </p>
+      </div>
+    </details>
+  );
+}
+
+/** "How to find us" entry card on the hotel overview. */
+export function ArrivalLink({
+  hotelSlug,
+  locale,
+}: {
+  hotelSlug: string;
+  locale: Locale;
+}) {
+  return (
+    <Link
+      href={`/${hotelSlug}/dojazd`}
+      className="flex items-center gap-4 rounded-xl border border-neutral-200 p-4 transition-colors hover:border-(--hotel-primary)/50"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--hotel-primary)/10 text-(--hotel-primary)">
+        <MapPin className="size-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium text-neutral-900">
+          {gs("arrivalTitle", locale)}
+        </span>
+        <span className="block text-sm text-neutral-500">
+          {gs("arrivalHint", locale)}
+        </span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-neutral-400" aria-hidden />
+    </Link>
+  );
+}
+
+/**
+ * Room-page arrival block as a native <details> — collapsed by default:
+ * the room page leads with the room itself, and guests already in the
+ * building don't need directions. Photos ride along because "where is
+ * the key box" is exactly the thing a picture answers.
+ */
+export function ArrivalBlock({
+  hotelSlug,
+  steps,
+  locale,
+}: {
+  hotelSlug: string;
+  steps: GuestArrivalStep[];
+  locale: Locale;
+}) {
+  if (steps.length === 0) return null;
+  return (
+    <details className="group rounded-xl border border-neutral-200">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 font-semibold text-neutral-900 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center gap-2.5">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--hotel-primary)/10 text-(--hotel-primary)">
+            <MapPin className="size-4" aria-hidden />
+          </span>
+          {gs("arrivalBlock", locale)}
+        </span>
+        <ChevronDown
+          className="size-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+
+      <div className="space-y-4 border-t border-neutral-100 p-4">
+        <ol className="space-y-3">
+          {steps.map((step, index) => {
+            const title = pick(step.title, locale);
+            const body = pick(step.body, locale);
+            return (
+              <li key={index}>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="font-mono text-lg font-bold leading-none text-(--hotel-primary)">
+                    {index + 1}
+                  </span>
+                  {title && (
+                    <h3 className="text-sm font-semibold text-neutral-900">{title}</h3>
+                  )}
+                </div>
+                {body && (
+                  <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-line text-neutral-600">
+                    {body}
+                  </p>
+                )}
+                {step.photoUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={step.photoUrl}
+                    alt={title}
+                    className="mt-2 h-36 w-full rounded-lg border border-neutral-200 object-cover"
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+
+        <p>
+          <Link
+            href={`/${hotelSlug}/dojazd`}
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400 transition-colors hover:text-(--hotel-primary)"
+          >
+            {gs("fullGuide", locale)}
           </Link>
         </p>
       </div>

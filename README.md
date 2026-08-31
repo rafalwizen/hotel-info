@@ -46,7 +46,8 @@ Seed gives you `demo@hotelinfo.test` / `demo1234` and hotel `willa-mazury`
 - Every admin/server query starts with `requireHotel()` and filters by `hotelId`.
 - URL ids are never trusted alone — always `and(eq(id), eq(hotelId))`, return 404.
 - Every admin mutation ends with `revalidatePath(`/${hotel.slug}`, "layout")`.
-- Any new top-level route must be added to `RESERVED_SLUGS` in `src/lib/slug.ts`.
+- Any new top-level route must be added to `RESERVED_SLUGS` in `src/lib/slug.ts`;
+  any new static route under `/(guest)/[hotel]/` — `RESERVED_ROOM_SLUGS`.
 - Code comments / identifiers / commits: English. Admin UI: Polish. Guest pages: PL/EN.
 
 ## CI (GitHub Actions)
@@ -73,19 +74,23 @@ Until both exist, PRs are gated by `verify` alone.
    - `AUTH_SECRET` — `npx auth secret`
    - `GUEST_BASE_URL` — `https://<short-qr-domain>` (no trailing slash)
    - `RESEND_API_KEY` / `EMAIL_FROM` — optional, password-reset email
-3. **Domains**: add both the app domain and the short QR domain to the project.
+   - `BLOB_READ_WRITE_TOKEN` — created by step 3, do not set by hand
+3. **Storage**: Vercel console → Storage → Blob → Create database → connect it
+   to this project (adds `BLOB_READ_WRITE_TOKEN`) → Redeploy. Required for
+   arrival-guide photo uploads in the panel.
+4. **Domains**: add both the app domain and the short QR domain to the project.
    Guest URLs are path-based on the same app, so no redirects are needed.
-4. **First release migrations** (local terminal, against production DB):
+5. **First release migrations** (local terminal, against production DB):
 
    ```bash
    DATABASE_URL="<prod-pooled-url>" npm run db:migrate
    ```
 
    ⚠️ `db:seed` wipes all data — never run it against production.
-5. **Cron**: none for now — the Hobby plan only allows daily crons and Neon
+6. **Cron**: none for now — the Hobby plan only allows daily crons and Neon
    auto-wakes on first request (~0.5s cold start). On Pro, re-add an hourly
    `/api/health` ping in `vercel.json` to keep compute warm.
-6. **Post-deploy checks**: `/api/health` returns `{"ok":true}`, signup → onboarding
+7. **Post-deploy checks**: `/api/health` returns `{"ok":true}`, signup → onboarding
    works, QR previews in the panel show the production QR domain.
 
 ## Domain notes

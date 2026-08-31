@@ -6,6 +6,7 @@ import { pick } from "@/lib/i18n";
 import { WifiCard } from "@/components/guest/wifi-card";
 import {
   AmenityChips,
+  ArrivalBlock,
   DoorPlate,
   GuestFooter,
   HotelDetails,
@@ -43,6 +44,8 @@ export function GuestRoomPage({ payload }: { payload: RoomPagePayload }) {
         />
 
         <AmenityChips items={payload.amenities} locale={locale} />
+
+        <ArrivalBlock hotelSlug={hotel.slug} steps={payload.arrivalSteps} locale={locale} />
 
         <SectionCards sections={payload.sections} locale={locale} />
 
