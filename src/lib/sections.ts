@@ -1,22 +1,24 @@
 import type { Localized } from "@/db/schema";
 
 /**
- * Pure functions describing room content inheritance. The storage model
- * (room_sections table) keeps hotel templates (roomId NULL) and per-room
- * rows in one table; these helpers merge them for rendering and compute
- * editor states. Kept side-effect free — highest test value (Phase 7).
+ * Pure functions describing template/override/extra inheritance. Two content
+ * families share this model: room sections and arrival guide steps. Kept
+ * side-effect free and generic over the base shape — highest test value.
  */
-export type SectionData = {
+export type Inheritable = {
   id: string;
   basedOnId: string | null;
+  sortOrder: number;
+  enabled: boolean;
+};
+
+export type SectionData = Inheritable & {
   title: Localized;
   body: Localized;
   icon: string;
-  enabled: boolean;
-  sortOrder: number;
 };
 
-const bySortOrder = (a: SectionData, b: SectionData) => a.sortOrder - b.sortOrder;
+const bySortOrder = (a: Inheritable, b: Inheritable) => a.sortOrder - b.sortOrder;
 
 /**
  * Merge hotel templates with a room's overrides/extras:
@@ -25,18 +27,18 @@ const bySortOrder = (a: SectionData, b: SectionData) => a.sortOrder - b.sortOrde
  * - override with content replaces the template in the template's position
  * - room-only extras (basedOnId NULL) are appended at the end
  */
-export function mergeSections(
-  templates: SectionData[],
-  roomSections: SectionData[],
-): SectionData[] {
-  const overridesByTemplate = new Map<string, SectionData>();
-  const extras: SectionData[] = [];
+export function mergeSections<T extends Inheritable>(
+  templates: T[],
+  roomSections: T[],
+): T[] {
+  const overridesByTemplate = new Map<string, T>();
+  const extras: T[] = [];
   for (const section of roomSections) {
     if (section.basedOnId) overridesByTemplate.set(section.basedOnId, section);
     else extras.push(section);
   }
 
-  const merged: SectionData[] = [];
+  const merged: T[] = [];
   for (const template of [...templates].sort(bySortOrder)) {
     if (!template.enabled) continue;
     const override = overridesByTemplate.get(template.id);
@@ -49,18 +51,18 @@ export function mergeSections(
 
 export type TemplateState = "inherited" | "overridden" | "hidden";
 
-export type TemplateWithState = {
-  template: SectionData;
-  override: SectionData | null;
+export type TemplateWithState<T extends Inheritable> = {
+  template: T;
+  override: T | null;
   state: TemplateState;
 };
 
 /** Compute the per-template editor state for one room. */
-export function templateStates(
-  templates: SectionData[],
-  roomSections: SectionData[],
-): TemplateWithState[] {
-  const overridesByTemplate = new Map<string, SectionData>();
+export function templateStates<T extends Inheritable>(
+  templates: T[],
+  roomSections: T[],
+): TemplateWithState<T>[] {
+  const overridesByTemplate = new Map<string, T>();
   for (const section of roomSections) {
     if (section.basedOnId) overridesByTemplate.set(section.basedOnId, section);
   }
@@ -78,7 +80,7 @@ export function templateStates(
 }
 
 /** Room-only sections (basedOnId NULL), sorted. */
-export function extraSections(roomSections: SectionData[]): SectionData[] {
+export function extraSections<T extends Inheritable>(roomSections: T[]): T[] {
   return roomSections
     .filter((s) => !s.basedOnId)
     .sort((a, b) => a.sortOrder - b.sortOrder);

@@ -51,6 +51,8 @@ export const hotels = pgTable("hotels", {
   phone: text("phone").notNull().default(""),
   email: text("email").notNull().default(""),
   addressLine: text("address_line").notNull().default(""),
+  /** Dropped map pin link (Google Maps share URL) shown on the arrival guide. */
+  arrivalMapUrl: text("arrival_map_url"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -176,6 +178,37 @@ export const roomSections = pgTable(
   (t) => [
     index("room_sections_room_idx").on(t.roomId),
     index("room_sections_hotel_idx").on(t.hotelId),
+  ],
+);
+
+/**
+ * Arrival guide steps ("how to find us": gate code, key box, back entrance).
+ * Same inheritance model as room_sections:
+ * - roomId NULL  => hotel-wide template step
+ * - roomId + basedOnId => per-room override of that template step
+ * - roomId + basedOnId NULL => room-only extra step
+ * An override with enabled=false hides the template step for that room.
+ */
+export const arrivalSteps = pgTable(
+  "arrival_steps",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    hotelId: uuid("hotel_id")
+      .notNull()
+      .references(() => hotels.id, { onDelete: "cascade" }),
+    roomId: uuid("room_id").references(() => rooms.id, { onDelete: "cascade" }),
+    basedOnId: uuid("based_on_id").references((): AnyPgColumn => arrivalSteps.id, {
+      onDelete: "cascade",
+    }),
+    title: localized("title"),
+    body: localized("body"),
+    photoUrl: text("photo_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    enabled: boolean("enabled").notNull().default(true),
+  },
+  (t) => [
+    index("arrival_steps_room_idx").on(t.roomId),
+    index("arrival_steps_hotel_idx").on(t.hotelId),
   ],
 );
 

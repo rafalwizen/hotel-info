@@ -8,6 +8,13 @@
       "when": 1787673725662,
       "tag": "0000_wakeful_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788171860921,
+      "tag": "0001_bouncy_wildside",
+      "breakpoints": true
     }
   ]
 }

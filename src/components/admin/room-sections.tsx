@@ -44,7 +44,7 @@ export function RoomSections({
   extras,
 }: {
   roomId: string;
-  templates: TemplateWithState[];
+  templates: TemplateWithState<SectionData>[];
   extras: SectionData[];
 }) {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);

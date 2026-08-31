@@ -52,6 +52,17 @@ export function isReservedSlug(slug: string): boolean {
   return RESERVED_SLUGS.has(slug.toLowerCase());
 }
 
+/**
+ * Static SECOND-level route segments under /{hotel}/... — they collide with
+ * room slugs exactly like top-level routes collide with hotel slugs. Any new
+ * static route directly under (guest)/[hotel]/ must be added here (AGENTS.md).
+ */
+export const RESERVED_ROOM_SLUGS: ReadonlySet<string> = new Set(["dojazd"]);
+
+export function isReservedRoomSlug(slug: string): boolean {
+  return RESERVED_ROOM_SLUGS.has(slug.toLowerCase());
+}
+
 export function isValidSlug(slug: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(slug) && slug.length >= 2;
 }

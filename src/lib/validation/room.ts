@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { localizedField } from "./hotel";
+import { isReservedRoomSlug } from "@/lib/slug";
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
@@ -16,7 +17,10 @@ export const roomSchema = z.object({
     .trim()
     .min(1, "Adres pokoju jest wymagany")
     .max(60, "Maksymalnie 60 znaków")
-    .regex(SLUG_RE, "Adres: małe litery, cyfry i myślniki"),
+    .regex(SLUG_RE, "Adres: małe litery, cyfry i myślniki")
+    .refine((slug) => !isReservedRoomSlug(slug), {
+      message: "Ten adres jest zarezerwowany dla systemu — wybierz inny.",
+    }),
   name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" }),
   floor: z
     .number()
