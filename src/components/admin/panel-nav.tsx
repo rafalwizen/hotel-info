@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BedDouble,
   LayoutTemplate,
+  MapPin,
   QrCode,
   Settings,
   Sparkles,
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/panel/pokoje", label: "Pokoje", icon: BedDouble },
   { href: "/panel/szablon-pokoi", label: "Szablon pokoi", icon: LayoutTemplate },
   { href: "/panel/udogodnienia", label: "Udogodnienia", icon: Sparkles },
+  { href: "/panel/dojazd", label: "Dojazd", icon: MapPin },
   { href: "/panel/qr", label: "Kody QR", icon: QrCode },
   { href: "/panel/ustawienia", label: "Ustawienia", icon: Settings },
 ] as const;
