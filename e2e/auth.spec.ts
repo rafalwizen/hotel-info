@@ -41,7 +41,9 @@ test.describe("auth flow", () => {
     await page.getByLabel("E-mail").fill(email);
     await page.getByLabel("Hasło").fill(password);
     await page.getByRole("button", { name: "Utwórz konto" }).click();
-    await expect(page).toHaveURL(/\/panel\/start$/);
+    // Under parallel-suite load the signup -> /panel -> /panel/start redirect
+    // chain pays the route-compilation cost (same as the first-signup test).
+    await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
 
     // The onboarding page has no sidebar — logout via its escape hatch
     await page.getByRole("button", { name: "Wyloguj się" }).click();
@@ -55,7 +57,7 @@ test.describe("auth flow", () => {
     await page.getByLabel("E-mail").fill(email);
     await page.getByLabel("Hasło").fill(password);
     await page.getByRole("button", { name: "Zaloguj się" }).click();
-    await expect(page).toHaveURL(/\/panel\/start$/);
+    await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
     await expect(page.getByText("Skonfiguruj swój hotel")).toBeVisible();
   });
 
