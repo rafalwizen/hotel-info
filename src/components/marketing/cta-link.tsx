@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   href: string;
   children: React.ReactNode;
-  /** primary = ink pill, secondary = outlined, invert = for dark bands. */
+  /** primary = ink pill, secondary = outlined, invert = amber pill for dark bands. */
   variant?: "primary" | "secondary" | "invert";
   size?: "sm" | "lg";
   className?: string;
@@ -21,7 +21,7 @@ export function CtaLink({ href, children, variant = "primary", size = "lg", clas
         variant === "primary" && "bg-neutral-900 text-white hover:bg-neutral-700",
         variant === "secondary" &&
           "border border-neutral-300 bg-white text-neutral-900 hover:border-neutral-400 hover:bg-neutral-50",
-        variant === "invert" && "bg-white text-neutral-900 hover:bg-neutral-200",
+        variant === "invert" && "bg-amber-400 text-neutral-900 hover:bg-amber-300",
         className,
       )}
     >
