@@ -131,7 +131,7 @@ export default function LandingPage() {
             checkout i instrukcje sprzętów. Po polsku i angielsku, bez aplikacji i bez logowania.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <CtaLink href="/rejestracja">Wypróbuj 14 dni za darmo</CtaLink>
+            <CtaLink href="/rejestracja">Wypróbuj za darmo</CtaLink>
             <CtaLink href="/#demo" variant="secondary">
               Zobacz demo
             </CtaLink>
@@ -149,19 +149,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works — a real sequence, hence the numbers. */}
+      {/* Trust strip — honest signals only; real owner quotes come later. */}
       <section className="border-y border-neutral-200">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-16 md:grid-cols-3 md:px-8 md:py-20">
-          {STEPS.map((step) => (
-            <div key={step.no}>
-              <p className="font-mono text-sm font-bold tracking-[0.18em] text-amber-700">
-                {step.no}
-              </p>
-              <h3 className="mt-3 text-lg font-semibold text-neutral-900">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.body}</p>
-            </div>
-          ))}
-        </div>
+        <p className="mx-auto w-full max-w-6xl px-5 py-4 text-center font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-500 md:px-8">
+          Wsparcie po polsku · Dane hostowane w UE · 14 dni bez karty kredytowej
+        </p>
       </section>
 
       {/* The problem, as it actually arrives at a reception desk. */}
@@ -185,11 +177,27 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="mt-12 max-w-xl text-lg font-medium text-neutral-900">
+            Pięć takich pytań dziennie po 3 minuty to ponad 7 godzin recepcji w miesiącu.
             Każdą z tych odpowiedzi możesz przykleić na drzwiach. Dosłownie.{" "}
             <Link href="/#demo" className="text-amber-700 underline-offset-4 hover:underline">
-              Zobacz, jak to działa ↓
+              Zobacz rozwiązanie ↓
             </Link>
           </p>
+        </div>
+      </section>
+
+      {/* How it works — a real sequence, hence the numbers. */}
+      <section className="border-y border-neutral-200">
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-16 md:grid-cols-3 md:px-8 md:py-20">
+          {STEPS.map((step) => (
+            <div key={step.no}>
+              <p className="font-mono text-sm font-bold tracking-[0.18em] text-amber-700">
+                {step.no}
+              </p>
+              <h3 className="mt-3 text-lg font-semibold text-neutral-900">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -215,6 +223,9 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+            <div className="mt-10">
+              <CtaLink href="/rejestracja">Wypróbuj za darmo</CtaLink>
+            </div>
           </div>
           <DemoPhone />
         </div>

@@ -34,7 +34,7 @@ export function SiteHeader() {
             Zaloguj się
           </Link>
           <CtaLink href="/rejestracja" size="sm">
-            Wypróbuj darmowo
+            Wypróbuj za darmo
           </CtaLink>
         </nav>
       </div>
