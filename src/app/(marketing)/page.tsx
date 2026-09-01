@@ -6,6 +6,7 @@ import {
   Languages,
   Layers,
   Link2,
+  MapPin,
   QrCode,
   RefreshCw,
   ScanLine,
@@ -14,6 +15,7 @@ import {
 import { CtaLink } from "@/components/marketing/cta-link";
 import { StickerCard } from "@/components/marketing/sticker-card";
 import { DemoPhone } from "@/components/marketing/demo-phone";
+import { DEMO_STICKER_DOMAIN } from "@/lib/site";
 
 /** Shared section chrome: mono eyebrow + display heading. */
 function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
@@ -54,6 +56,28 @@ const RECEIVED_QUESTIONS = [
   { text: "Jak włączyć klimatyzację?", meta: "pokój 104 · 23:10", rotate: "-0.6deg" },
   { text: "O której zwalniamy pokój?", meta: "telefon · 10:05", rotate: "1deg" },
   { text: "Gdzie możemy zaparkować?", meta: "brama · 18:44", rotate: "-0.8deg" },
+];
+
+/** Arrival-guide mock — mirrors the real /{hotel}/dojazd page content. */
+const ARRIVAL_STEPS = [
+  {
+    title: "Brama na kod 4321",
+    body: "Kod wpisz na słupku przy bramie — otwiera się automatycznie.",
+  },
+  {
+    title: "Skrzynka z kluczami",
+    body: "Klucz do pokoju 101 wisi w skrzynce po lewej stronie wejścia.",
+  },
+  {
+    title: "Parking na podwórku",
+    body: "Wjedź za bramę w prawo — miejsca dla gości są przy płocie.",
+  },
+];
+
+const ARRIVAL_POINTS = [
+  "Kroki ze zdjęciami — brama, skrzynka na klucze, wejście",
+  "Pinezka na mapie — jeden dotyk i nawigacja prowadzi pod bramę",
+  "Inne wejście w którymś pokoju? Nadpisujesz pojedyncze kroki tylko tam",
 ];
 
 const DEMO_POINTS = [
@@ -198,6 +222,76 @@ export default function LandingPage() {
               <p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Arrival guide — the second artifact: one link sent before the trip. */}
+      <section className="bg-neutral-50">
+        <div className="mx-auto grid w-full max-w-6xl gap-14 px-5 py-20 md:grid-cols-[1fr_auto] md:items-center md:px-8 md:py-28">
+          <div>
+            <SectionHead eyebrow="Dojazd" title="Jeden link z instrukcją dojazdu" />
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-neutral-600">
+              Brama na kod, skrzynka na klucze, wjazd od podwórka? Spisz instrukcję krok po
+              kroku — ze zdjęciami i pinezką na mapie, po polsku i angielsku — a link wyślij
+              gościowi na Bookingu albo SMS-em, zanim wyruszy w drogę.
+            </p>
+            <ul className="mt-8 space-y-2.5">
+              {ARRIVAL_POINTS.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-sm text-neutral-600">
+                  <span
+                    className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-600"
+                    aria-hidden
+                  />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            {/* The message the owner actually sends */}
+            <div className="w-full max-w-xs rounded-2xl rounded-bl-md bg-neutral-900 px-4 py-3 shadow-sm">
+              <p className="text-sm leading-snug text-white">
+                Dzień dobry! Instrukcja dotarcia:{" "}
+                <span className="font-semibold text-amber-300 underline underline-offset-2">
+                  {DEMO_STICKER_DOMAIN}/willa-mazury/dojazd
+                </span>
+              </p>
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">
+                Booking.com · 2 dni przed przyjazdem
+              </p>
+            </div>
+            <p
+              className="font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-400"
+              aria-hidden
+            >
+              ↓ gość otwiera link
+            </p>
+            {/* What opens — styled like the printable artifacts elsewhere on the page */}
+            <div className="w-full max-w-xs rotate-[1.25deg] rounded-2xl border border-dashed border-neutral-300 bg-white p-5 shadow-sm transition-transform duration-300 ease-out hover:rotate-0">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">
+                Jak do nas trafić
+              </p>
+              <ol className="mt-4 space-y-4">
+                {ARRIVAL_STEPS.map((step, index) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="font-mono text-lg leading-none font-bold text-neutral-900">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900">{step.title}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-neutral-500">
+                        {step.body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800">
+                <MapPin className="size-3.5" aria-hidden />
+                Otwórz w Mapach
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
