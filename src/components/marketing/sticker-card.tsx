@@ -1,10 +1,12 @@
+import Link from "next/link";
 import { HeroQr } from "./hero-qr";
-import { DEMO_STICKER_DOMAIN } from "@/lib/site";
+import { DEMO_ROOM_URL } from "@/lib/site";
 
 /**
  * Marketing replica of the printable room sticker (see /panel/qr/print):
  * dashed cut line, hotel eyebrow, big mono room number, URL as the manual
- * fallback. The QR itself is live (HeroQr) and leads to the on-page demo.
+ * fallback. Both the QR (HeroQr) and the fallback URL lead to the demo
+ * hotel's real room 101 guest page.
  */
 export function StickerCard() {
   return (
@@ -25,7 +27,12 @@ export function StickerCard() {
           </p>
           <p className="mt-1.5 text-xs text-neutral-600">Pokój standardowy</p>
           <p className="mt-2 font-mono text-[9px] leading-snug break-all text-neutral-400">
-            {DEMO_STICKER_DOMAIN}/willa-mazury/101
+            <Link
+              href="/willa-mazury/101"
+              className="underline-offset-2 transition-colors hover:text-neutral-600 hover:underline"
+            >
+              {DEMO_ROOM_URL}
+            </Link>
           </p>
         </div>
       </div>

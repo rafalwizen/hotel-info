@@ -97,5 +97,6 @@ Until both exist, PRs are gated by `verify` alone.
 
 Guest QR codes encode `GUEST_BASE_URL/{hotel-slug}/{room-slug}`. The
 short domain (4–7 chars) keeps the QR pattern simple, which matters at a 20mm
-sticker size. `src/lib/site.ts` holds marketing placeholder constants
-(`CONTACT_EMAIL`, `DEMO_STICKER_DOMAIN`) — update them once the domains are bought.
+sticker size. `src/lib/site.ts` holds the `CONTACT_EMAIL` placeholder
+(update once the domain is bought); the demo guest URLs in marketing mocks
+derive from `GUEST_BASE_URL` and follow it automatically.

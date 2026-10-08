@@ -15,7 +15,7 @@ import {
 import { CtaLink } from "@/components/marketing/cta-link";
 import { StickerCard } from "@/components/marketing/sticker-card";
 import { DemoPhone } from "@/components/marketing/demo-phone";
-import { DEMO_STICKER_DOMAIN } from "@/lib/site";
+import { DEMO_ARRIVAL_URL } from "@/lib/site";
 
 /** Shared section chrome: mono eyebrow + display heading. */
 function SectionHead({ eyebrow, title }: { eyebrow: string; title: string }) {
@@ -252,9 +252,12 @@ export default function LandingPage() {
             <div className="w-full max-w-xs rounded-2xl rounded-bl-md bg-neutral-900 px-4 py-3 shadow-sm">
               <p className="text-sm leading-snug text-white">
                 Dzień dobry! Instrukcja dotarcia:{" "}
-                <span className="font-semibold text-amber-300 underline underline-offset-2">
-                  {DEMO_STICKER_DOMAIN}/willa-mazury/dojazd
-                </span>
+                <Link
+                  href="/willa-mazury/dojazd"
+                  className="font-semibold text-amber-300 underline underline-offset-2"
+                >
+                  {DEMO_ARRIVAL_URL}
+                </Link>
               </p>
               <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">
                 Booking.com · 2 dni przed przyjazdem
