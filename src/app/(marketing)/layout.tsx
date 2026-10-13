@@ -1,6 +1,8 @@
 import { Bricolage_Grotesque } from "next/font/google";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
+import { assistantEnabled } from "@/server/assistant/config";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -17,6 +19,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <SiteHeader />
       <div className="flex-1">{children}</div>
       <SiteFooter />
+      <AssistantWidget context="public" enabled={assistantEnabled()} />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { memberships } from "@/db/schema";
 import { requireUser } from "@/server/tenancy";
 import { LogoutButton } from "@/components/admin/logout-button";
 import { PanelNav } from "@/components/admin/panel-nav";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
+import { assistantEnabled } from "@/server/assistant/config";
 
 export const metadata = { title: "Panel — Hotel Info" };
 
@@ -30,6 +32,8 @@ export default async function PanelLayout({
     return (
       <>
         {children}
+        {/* No hotel yet — product help only (public context), no panel tools. */}
+        <AssistantWidget context="public" enabled={assistantEnabled()} />
         <Toaster richColors position="bottom-right" />
       </>
     );
@@ -50,6 +54,7 @@ export default async function PanelLayout({
         </div>
       </aside>
       <main className="min-w-0 flex-1 space-y-6 pb-16 print:pb-0">{children}</main>
+      <AssistantWidget context="panel" enabled={assistantEnabled()} />
       <Toaster richColors position="bottom-right" className="print:hidden" />
     </div>
   );

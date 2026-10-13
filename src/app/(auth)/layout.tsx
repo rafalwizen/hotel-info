@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
+import { assistantEnabled } from "@/server/assistant/config";
 
 export const metadata: Metadata = {
   title: "Hotel Info",
@@ -17,6 +19,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </p>
       </div>
       <div className="w-full max-w-sm">{children}</div>
+      <AssistantWidget context="public" enabled={assistantEnabled()} />
     </div>
   );
 }
