@@ -17,6 +17,7 @@
     "db:seed": "tsx --env-file-if-exists=.env db/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@hookform/resolvers": "^5.9.1",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/blob": "^2.8.0",
