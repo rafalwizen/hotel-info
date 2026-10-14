@@ -29,7 +29,7 @@ import { getAssistantConfig, type AssistantConfig } from "@/server/assistant/con
 import { enqueueAssistantCall, getAssistantClient } from "@/server/assistant/client";
 import { panelSystemPrompt, publicSystemPrompt } from "@/server/assistant/prompts";
 import { enrichProposalDisplay } from "@/server/assistant/proposal-display";
-import { executeReadTool, panelTools, publicTools } from "@/server/assistant/tools";
+import { executeReadTool, PANEL_READ_TOOLS, panelTools, publicTools } from "@/server/assistant/tools";
 import { getPanelContext, type PanelContext } from "@/server/queries/panel";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ const RATE_LIMITS = {
   public: { limit: 8, windowMs: 5 * 60_000 },
   panel: { limit: 30, windowMs: 5 * 60_000 },
 } as const;
-const MAX_ITERATIONS = { public: 3, panel: 6 } as const;
+const MAX_ITERATIONS = { public: 3, panel: 8 } as const;
 // Panel proposals can carry long PL/EN bodies — 1200 would truncate them.
 const MAX_TOKENS = { public: 1200, panel: 4000 } as const;
 const MAX_NAV_ACTIONS = 3;
@@ -290,12 +290,16 @@ async function runConversation({ config, context, panel, conversation, send, sig
         continue;
       }
 
-      if (panel && (block.name === "list_rooms" || block.name === "list_amenities" || block.name === "get_hotel_info")) {
-        const data = await executeReadTool(block.name, panel);
+      if (panel && PANEL_READ_TOOLS.has(block.name)) {
+        const data = (await executeReadTool(block.name, block.input, panel)) as {
+          error?: unknown;
+        };
+        const failed = typeof data?.error === "string";
         results.push({
           type: "tool_result",
           tool_use_id: block.id,
-          content: JSON.stringify(data),
+          ...(failed ? { is_error: true } : {}),
+          content: failed ? String(data.error) : JSON.stringify(data),
         });
         continue;
       }
