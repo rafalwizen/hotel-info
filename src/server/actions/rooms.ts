@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
   amenities,
+  arrivalSteps,
   roomAmenities,
   roomRedirects,
   roomSections,
@@ -15,7 +16,7 @@ import {
 import { isValidIcon } from "@/lib/icons";
 import { slugify } from "@/lib/slug";
 import { requireHotel } from "@/server/tenancy";
-import { createRoomSchema, roomSchema } from "@/lib/validation/room";
+import { createRoomSchema, duplicateRoomSchema, roomSchema } from "@/lib/validation/room";
 import { sectionSchema } from "@/lib/validation/section";
 import type { ActionState } from "@/lib/validation/types";
 
@@ -122,6 +123,8 @@ export async function createRoomAction(
         number: parsed.data.number,
         slug,
         name: parsed.data.name,
+        floor: parsed.data.floor ?? null,
+        maxGuests: parsed.data.maxGuests ?? 2,
         sortOrder,
       })
       .returning({ id: rooms.id });
@@ -133,6 +136,108 @@ export async function createRoomAction(
     throw err;
   }
 
+  revalidatePath(`/${hotel.slug}`, "layout");
+  redirect(`/panel/pokoje/${newId}`);
+}
+
+/**
+ * Duplicate a room with its amenities, per-room section overrides/extras and
+ * arrival-step overrides/extras. Optional payload fields override the source
+ * values; the copy always starts UNPUBLISHED. Arrival photo URLs are copied
+ * by reference — no blob operations. Mirrors the transactional shape of
+ * createHotelAction (hotel.ts).
+ */
+export async function duplicateRoomAction(
+  input: z.input<typeof duplicateRoomSchema>,
+): Promise<ActionState> {
+  const parsed = duplicateRoomSchema.safeParse(input);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  const { hotel } = await requireHotel();
+
+  const source = await findRoom(hotel.id, parsed.data.sourceRoomId);
+  if (!source) return { error: "Pokój źródłowy nie istnieje." };
+
+  const base =
+    slugify(parsed.data.number) || slugify(parsed.data.name?.pl ?? source.name.pl) || "pokoj";
+  const slug = await uniqueRoomSlug(hotel.id, base);
+  const sortOrder = await nextSortOrder(hotel.id, "rooms");
+
+  let newId: string;
+  try {
+    newId = await db.transaction(async (tx) => {
+      const [room] = await tx
+        .insert(rooms)
+        .values({
+          hotelId: hotel.id,
+          number: parsed.data.number,
+          slug,
+          name: parsed.data.name ?? source.name,
+          floor: parsed.data.floor !== undefined ? parsed.data.floor : source.floor,
+          maxGuests: parsed.data.maxGuests ?? source.maxGuests,
+          sortOrder,
+          published: false,
+        })
+        .returning({ id: rooms.id });
+
+      const amenityRows = await tx
+        .select({ amenityId: roomAmenities.amenityId })
+        .from(roomAmenities)
+        .where(eq(roomAmenities.roomId, source.id));
+      if (amenityRows.length > 0) {
+        await tx
+          .insert(roomAmenities)
+          .values(amenityRows.map((row) => ({ roomId: room.id, amenityId: row.amenityId })));
+      }
+
+      const sections = await tx
+        .select()
+        .from(roomSections)
+        .where(eq(roomSections.roomId, source.id));
+      if (sections.length > 0) {
+        await tx.insert(roomSections).values(
+          sections.map((section) => ({
+            hotelId: hotel.id,
+            roomId: room.id,
+            basedOnId: section.basedOnId,
+            title: section.title,
+            body: section.body,
+            icon: section.icon,
+            sortOrder: section.sortOrder,
+            enabled: section.enabled,
+          })),
+        );
+      }
+
+      const steps = await tx
+        .select()
+        .from(arrivalSteps)
+        .where(eq(arrivalSteps.roomId, source.id));
+      if (steps.length > 0) {
+        await tx.insert(arrivalSteps).values(
+          steps.map((step) => ({
+            hotelId: hotel.id,
+            roomId: room.id,
+            basedOnId: step.basedOnId,
+            title: step.title,
+            body: step.body,
+            photoUrl: step.photoUrl,
+            sortOrder: step.sortOrder,
+            enabled: step.enabled,
+          })),
+        );
+      }
+
+      return room.id;
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return { error: "Pokój z tym numerem już istnieje." };
+    }
+    throw err;
+  }
+
+  // redirect() throws — must stay OUTSIDE the transaction.
   revalidatePath(`/${hotel.slug}`, "layout");
   redirect(`/panel/pokoje/${newId}`);
 }

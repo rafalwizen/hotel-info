@@ -4,10 +4,28 @@ import { isReservedRoomSlug } from "@/lib/slug";
 
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
-/** Minimal fields for the "add room" form on the room list. */
+const floorSchema = z
+  .number()
+  .int()
+  .min(-2, "Piętro: -2 do 50")
+  .max(50, "Piętro: -2 do 50");
+
+const maxGuestsSchema = z
+  .number()
+  .int()
+  .min(1, "Minimum 1 gość")
+  .max(20, "Maksymalnie 20 gości");
+
+/**
+ * Fields for the "add room" form on the room list. Floor and max guests are
+ * optional — the manual form keeps sending just number + name, while the
+ * assistant (and any richer client) may fill them at creation time.
+ */
 export const createRoomSchema = z.object({
   number: z.string().trim().min(1, "Numer pokoju jest wymagany").max(10, "Maksymalnie 10 znaków"),
   name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" }),
+  floor: floorSchema.nullable().optional(),
+  maxGuests: maxGuestsSchema.optional(),
 });
 
 export const roomSchema = z.object({
@@ -22,15 +40,24 @@ export const roomSchema = z.object({
       message: "Ten adres jest zarezerwowany dla systemu — wybierz inny.",
     }),
   name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" }),
-  floor: z
-    .number()
-    .int()
-    .min(-2, "Piętro: -2 do 50")
-    .max(50, "Piętro: -2 do 50")
-    .nullable(),
-  maxGuests: z.number().int().min(1, "Minimum 1 gość").max(20, "Maksymalnie 20 gości"),
+  floor: floorSchema.nullable(),
+  maxGuests: maxGuestsSchema,
   published: z.boolean(),
+});
+
+/**
+ * Duplicate a room: number is the one thing that cannot be copied; every
+ * other override is optional — absent means "copy from the source room".
+ * `floor: null` explicitly clears the floor, `undefined` copies it.
+ */
+export const duplicateRoomSchema = z.object({
+  sourceRoomId: z.uuid("Nieprawidłowy identyfikator pokoju"),
+  number: createRoomSchema.shape.number,
+  name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" }).optional(),
+  floor: floorSchema.nullable().optional(),
+  maxGuests: maxGuestsSchema.optional(),
 });
 
 export type CreateRoomInput = z.input<typeof createRoomSchema>;
 export type RoomInput = z.input<typeof roomSchema>;
+export type DuplicateRoomInput = z.input<typeof duplicateRoomSchema>;
