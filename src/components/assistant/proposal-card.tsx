@@ -14,12 +14,18 @@ import { Button } from "@/components/ui/button";
 import { PROPOSAL_META } from "@/lib/assistant/proposals";
 import type { Proposal } from "@/lib/assistant/types";
 import type { ActionState } from "@/lib/validation/types";
-import { createRoomAction } from "@/server/actions/rooms";
+import { createRoomAction, duplicateRoomAction } from "@/server/actions/rooms";
 import { upsertArrivalStepAction } from "@/server/actions/arrival";
 import { upsertAmenityAction } from "@/server/actions/amenities";
 import { updateHotelSettingsAction } from "@/server/actions/hotel";
 
 const NO_TRANSLATION = "(bez tłumaczenia)";
+const SAME_AS_SOURCE = "jak w pokoju źródłowym";
+
+/** Cap card display; the saved payload is unaffected. */
+function truncate(value: string, max = 500): string {
+  return value.length > max ? `${value.slice(0, max)}…` : value;
+}
 
 function localizedRows(
   label: string,
@@ -37,6 +43,33 @@ function rowsFor(proposal: Proposal): { label: string; value: string }[] {
       return [
         { label: "Numer", value: proposal.input.number },
         ...localizedRows("Nazwa", proposal.input.name),
+        {
+          label: "Piętro",
+          value: proposal.input.floor === undefined || proposal.input.floor === null ? "—" : String(proposal.input.floor),
+        },
+        {
+          label: "Max gości",
+          value: proposal.input.maxGuests === undefined ? "2 (domyślnie)" : String(proposal.input.maxGuests),
+        },
+        { label: "Opublikowany", value: "tak (domyślnie)" },
+      ];
+    case "duplicate_room":
+      return [
+        { label: "Źródło", value: proposal.display?.targetLabel ?? proposal.sourceRoomId },
+        { label: "Numer", value: proposal.number },
+        ...(proposal.name
+          ? localizedRows("Nazwa", proposal.name)
+          : [{ label: "Nazwa (PL)", value: SAME_AS_SOURCE }]),
+        {
+          label: "Piętro",
+          value: proposal.floor === undefined ? SAME_AS_SOURCE : proposal.floor === null ? "—" : String(proposal.floor),
+        },
+        {
+          label: "Max gości",
+          value: proposal.maxGuests === undefined ? SAME_AS_SOURCE : String(proposal.maxGuests),
+        },
+        { label: "Kopiowane", value: "udogodnienia, nadpisane sekcje i kroki dojazdu" },
+        { label: "Opublikowany", value: "nie — opublikujesz w edytorze" },
       ];
     case "upsert_arrival_step":
       return [
@@ -69,6 +102,14 @@ async function applyProposal(proposal: Proposal): Promise<ActionState | undefine
   switch (proposal.action) {
     case "create_room":
       return createRoomAction(proposal.input);
+    case "duplicate_room":
+      return duplicateRoomAction({
+        sourceRoomId: proposal.sourceRoomId,
+        number: proposal.number,
+        name: proposal.name,
+        floor: proposal.floor,
+        maxGuests: proposal.maxGuests,
+      });
     case "upsert_arrival_step":
       return upsertArrivalStepAction(proposal.input);
     case "upsert_amenity":
@@ -129,7 +170,7 @@ export function ProposalCard({
         {rowsFor(proposal).map((row) => (
           <div key={row.label} className="flex gap-2 text-xs">
             <dt className="w-32 shrink-0 text-muted-foreground">{row.label}</dt>
-            <dd className="min-w-0 break-words whitespace-pre-wrap">{row.value || "—"}</dd>
+            <dd className="min-w-0 break-words whitespace-pre-wrap">{truncate(row.value) || "—"}</dd>
           </div>
         ))}
       </dl>
@@ -151,7 +192,7 @@ export function ProposalCard({
           <X aria-hidden />
           Odrzuć
         </Button>
-        {proposal.action === "create_room" ? (
+        {proposal.action === "create_room" || proposal.action === "duplicate_room" ? (
           <span className="text-[11px] text-muted-foreground">Po zapisie otworzę edytor pokoju</span>
         ) : null}
       </div>

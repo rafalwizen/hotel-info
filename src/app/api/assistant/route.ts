@@ -28,6 +28,7 @@ import type { AssistantContext } from "@/lib/assistant/types";
 import { getAssistantConfig, type AssistantConfig } from "@/server/assistant/config";
 import { enqueueAssistantCall, getAssistantClient } from "@/server/assistant/client";
 import { panelSystemPrompt, publicSystemPrompt } from "@/server/assistant/prompts";
+import { enrichProposalDisplay } from "@/server/assistant/proposal-display";
 import { executeReadTool, panelTools, publicTools } from "@/server/assistant/tools";
 import { getPanelContext, type PanelContext } from "@/server/queries/panel";
 
@@ -39,6 +40,8 @@ const RATE_LIMITS = {
   panel: { limit: 30, windowMs: 5 * 60_000 },
 } as const;
 const MAX_ITERATIONS = { public: 3, panel: 6 } as const;
+// Panel proposals can carry long PL/EN bodies — 1200 would truncate them.
+const MAX_TOKENS = { public: 1200, panel: 4000 } as const;
 const MAX_NAV_ACTIONS = 3;
 const PING_INTERVAL_MS = 15_000;
 
@@ -199,7 +202,7 @@ async function runConversation({ config, context, panel, conversation, send, sig
     const stream = client.messages.stream(
       {
         model: config.model,
-        max_tokens: 1200,
+        max_tokens: MAX_TOKENS[context],
         temperature: 0,
         system,
         messages,
@@ -263,9 +266,24 @@ async function runConversation({ config, context, panel, conversation, send, sig
           });
           continue;
         }
+        const enriched = await enrichProposalDisplay(panel, parsed.data);
+        if (enriched.error) {
+          results.push({
+            type: "tool_result",
+            tool_use_id: block.id,
+            is_error: true,
+            content: `INVALID_TARGET: ${enriched.error}`,
+          });
+          continue;
+        }
         send({
           type: "proposal",
-          proposal: { id: nanoid(10), status: "pending", ...parsed.data },
+          proposal: {
+            id: nanoid(10),
+            status: "pending",
+            display: enriched.display,
+            ...parsed.data,
+          },
         });
         proposalEmitted = true;
         results.push({ type: "tool_result", tool_use_id: block.id, content: "PROPOSAL_DELIVERED" });

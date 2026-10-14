@@ -11,6 +11,43 @@ describe("proposalPayloadSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts create_room with optional floor and maxGuests", () => {
+    const parsed = proposalPayloadSchema.safeParse({
+      action: "create_room",
+      input: { number: "505", name: { pl: "Pokój rodzinny", en: "" }, floor: 2, maxGuests: 3 },
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("accepts a minimal duplicate_room payload (everything but number copied)", () => {
+    const parsed = proposalPayloadSchema.safeParse({
+      action: "duplicate_room",
+      sourceRoomId: "0b6d8f1e-4a1a-4e3f-9c2b-7e5d1a3f9c88",
+      number: "401",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("accepts duplicate_room with parameter overrides", () => {
+    const parsed = proposalPayloadSchema.safeParse({
+      action: "duplicate_room",
+      sourceRoomId: "0b6d8f1e-4a1a-4e3f-9c2b-7e5d1a3f9c88",
+      number: "401",
+      name: { pl: "Apartament Widok", en: "View Apartment" },
+      floor: 4,
+      maxGuests: 3,
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects duplicate_room without a number", () => {
+    const parsed = proposalPayloadSchema.safeParse({
+      action: "duplicate_room",
+      sourceRoomId: "0b6d8f1e-4a1a-4e3f-9c2b-7e5d1a3f9c88",
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it("rejects create_room without the PL name", () => {
     const parsed = proposalPayloadSchema.safeParse({
       action: "create_room",
@@ -65,6 +102,7 @@ describe("proposalPayloadSchema", () => {
     );
     expect(actions).toEqual([
       "create_room",
+      "duplicate_room",
       "upsert_arrival_step",
       "upsert_amenity",
       "update_hotel_settings",

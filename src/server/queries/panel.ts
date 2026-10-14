@@ -9,7 +9,7 @@
  */
 
 import { cache } from "react";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { amenities, hotels, memberships, rooms } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -59,3 +59,14 @@ export const listAmenitiesForPanel = cache(async (hotelId: string) =>
     .where(eq(amenities.hotelId, hotelId))
     .orderBy(asc(amenities.sortOrder)),
 );
+
+/** Human label for cards and enrichment ("Pokój 204 — Apartament"). */
+export const getRoomLabelForPanel = cache(async (hotelId: string, roomId: string) => {
+  const [room] = await db
+    .select({ number: rooms.number, name: rooms.name })
+    .from(rooms)
+    .where(and(eq(rooms.id, roomId), eq(rooms.hotelId, hotelId)))
+    .limit(1);
+  if (!room) return null;
+  return room.name.pl ? `Pokój ${room.number} — ${room.name.pl}` : `Pokój ${room.number}`;
+});

@@ -23,7 +23,22 @@ export type ChatMessage = {
  */
 export type ProposalStatus = "pending" | "saved" | "rejected";
 
-export type Proposal = { id: string; status: ProposalStatus } & ProposalPayload;
+/**
+ * Server-resolved display metadata for the card — labels, counts and
+ * validations the model must not be trusted to provide (uuids alone are
+ * unreadable; amenity id sets are validated against the catalog here).
+ */
+export type ProposalDisplay = {
+  targetLabel?: string;
+  amenityLabels?: string[];
+  overrideCount?: number;
+};
+
+export type Proposal = {
+  id: string;
+  status: ProposalStatus;
+  display?: ProposalDisplay;
+} & ProposalPayload;
 
 /** Server → client SSE events (see src/lib/assistant/sse.ts for framing). */
 export type AssistantSSEEvent =
