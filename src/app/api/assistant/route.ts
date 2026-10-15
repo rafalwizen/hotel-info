@@ -265,7 +265,7 @@ async function runConversation({ config, context, panel, conversation, send, sig
             .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
             .join("; ");
           console.warn(
-            `[assistant] INVALID_PAYLOAD action=${String((rawInput as { action?: unknown })?.action ?? "?")} iteration=${iteration} issues=[${issues}]`,
+            `[assistant] INVALID_PAYLOAD action=${String((rawInput as { action?: unknown })?.action ?? "?")} iteration=${iteration} raw=${JSON.stringify(rawInput)?.slice(0, 400) ?? "?"} issues=[${issues}]`,
           );
           results.push({
             type: "tool_result",

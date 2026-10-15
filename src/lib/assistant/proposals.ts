@@ -171,39 +171,155 @@ export type ProposalPayload = z.infer<typeof proposalPayloadSchema>;
 
 export type ProposalAction = ProposalPayload["action"];
 
+/** Which fields sit OUTSIDE `input` for each action (the rest is payload). */
+const OUTER_FIELDS: Record<ProposalAction, readonly string[]> = {
+  create_room: [],
+  duplicate_room: [],
+  update_room: ["roomId"],
+  set_room_published: ["roomId", "published"],
+  set_room_amenities: ["roomId", "amenityIds"],
+  upsert_template_section: [],
+  delete_template_section: ["sectionId"],
+  upsert_hotel_section: [],
+  delete_hotel_section: ["sectionId"],
+  upsert_room_section: ["roomId"],
+  override_room_section: ["roomId", "templateId"],
+  hide_room_section: ["roomId", "templateId", "hidden"],
+  reset_room_section: ["roomId", "templateId"],
+  delete_room_section: ["sectionId"],
+  upsert_arrival_step: [],
+  delete_arrival_step: ["stepId"],
+  update_arrival_map: [],
+  upsert_room_arrival_step: ["roomId"],
+  override_room_arrival_step: ["roomId", "templateId"],
+  hide_room_arrival_step: ["roomId", "templateId", "hidden"],
+  reset_room_arrival_step: ["roomId", "templateId"],
+  delete_room_arrival_step: ["stepId"],
+  upsert_amenity: [],
+  delete_amenity: ["amenityId"],
+  update_hotel_settings: [],
+};
+
+/** Members whose payload nests under `input` (vs. flat outer fields). */
+const USES_INPUT: ReadonlySet<ProposalAction> = new Set([
+  "create_room",
+  "duplicate_room",
+  "update_room",
+  "upsert_template_section",
+  "upsert_hotel_section",
+  "upsert_room_section",
+  "override_room_section",
+  "upsert_arrival_step",
+  "update_arrival_map",
+  "upsert_room_arrival_step",
+  "override_room_arrival_step",
+  "upsert_amenity",
+  "update_hotel_settings",
+]);
+
+const KNOWN_ACTIONS = new Set<string>(Object.keys(OUTER_FIELDS));
+
+const META_KEYS = ["action", "type", "op", "operation"] as const;
+
+/** Canonicalize model-spelled actions: "duplicateRoom" / "duplicate-room" → "duplicate_room". */
+function canonicalAction(value: unknown): ProposalAction | null {
+  if (typeof value !== "string") return null;
+  if (KNOWN_ACTIONS.has(value)) return value as ProposalAction;
+  const snake = value
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_");
+  return KNOWN_ACTIONS.has(snake) ? (snake as ProposalAction) : null;
+}
+
+/** Flat payloads with no action at all — resolved by unambiguous signature. */
+function actionBySignature(obj: Record<string, unknown>): ProposalAction | null {
+  if ("sourceRoomId" in obj && "number" in obj) return "duplicate_room";
+  if ("roomId" in obj && "amenityIds" in obj) return "set_room_amenities";
+  if ("roomId" in obj && typeof obj.published === "boolean") return "set_room_published";
+  return null;
+}
+
 /**
- * Tolerant pre-parser for raw model tool input. Providers keep surprising us:
- * an extra `input` wrapper, flat `duplicate_room` args, or a JSON number
- * where the room number is a string. Normalize the known quirks BEFORE
- * safeParse so a near-miss proposal does not burn loop iterations.
+ * Tolerant pre-parser for raw model tool input. Providers keep surprising
+ * us: a missing `action` discriminator (flat payload or nested under the
+ * action name), `type` instead of `action`, camelCase action names, stray
+ * wrappers, or a JSON number where the room number is a string. Rebuild a
+ * canonical shape BEFORE safeParse so a near-miss proposal does not burn
+ * loop iterations.
  */
 export function normalizeProposalInput(raw: unknown): unknown {
   if (typeof raw !== "object" || raw === null) return raw;
   const obj = { ...(raw as Record<string, unknown>) };
 
-  if (obj.action === "duplicate_room") {
-    // Extra wrapper: { action, input: { input: {...} } } → unwrap one level.
-    if (typeof obj.input === "object" && obj.input !== null && "input" in obj.input) {
-      const inner = obj.input as Record<string, unknown>;
-      const { input: nested, ...rest } = inner;
-      if (typeof nested === "object" && nested !== null) {
-        obj.input = { ...(nested as Record<string, unknown>), ...rest };
+  // 1. Resolve the action discriminator.
+  let action: ProposalAction | null = null;
+  let payloadSource: Record<string, unknown> = obj;
+
+  for (const key of META_KEYS) {
+    action = canonicalAction(obj[key]);
+    if (action) break;
+  }
+
+  if (!action && typeof obj.input === "object" && obj.input !== null) {
+    action = canonicalAction((obj.input as Record<string, unknown>).action);
+  }
+
+  if (!action) {
+    // Payload nested under the action name: { duplicate_room: {...} }.
+    for (const [key, value] of Object.entries(obj)) {
+      if (key === "input") continue;
+      const candidate = canonicalAction(key);
+      if (candidate && typeof value === "object" && value !== null) {
+        action = candidate;
+        payloadSource = { ...(value as Record<string, unknown>) };
+        break;
       }
     }
-    // Flat shape: { action, sourceRoomId, number, ... } → wrap into input.
-    if (!obj.input && ("sourceRoomId" in obj || "number" in obj)) {
-      const rest: Record<string, unknown> = { ...obj };
-      delete rest.action;
-      return { action: "duplicate_room", input: coerceRoomNumber(rest) };
+  }
+
+  if (!action) action = actionBySignature(obj);
+  if (!action) return obj;
+
+  // 2. Strip meta keys from the payload source.
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payloadSource)) {
+    if (META_KEYS.includes(key as (typeof META_KEYS)[number])) continue;
+    cleaned[key] = value;
+  }
+
+  // 3. Split outer fields from the input payload.
+  const outer: Record<string, unknown> = {};
+  for (const field of OUTER_FIELDS[action]) {
+    if (field in cleaned) {
+      outer[field] = cleaned[field];
+      delete cleaned[field];
     }
-    obj.input = coerceRoomNumber(obj.input);
   }
 
-  if (obj.action === "create_room" && typeof obj.input === "object" && obj.input !== null) {
-    obj.input = coerceRoomNumber(obj.input);
+  const result: Record<string, unknown> = { action, ...outer };
+
+  if (USES_INPUT.has(action)) {
+    let input: Record<string, unknown> =
+      typeof cleaned.input === "object" && cleaned.input !== null
+        ? { ...(cleaned.input as Record<string, unknown>) }
+        : {};
+    delete cleaned.input;
+    // Extra wrapper: input.input — unwrap one level.
+    if (typeof input.input === "object" && input.input !== null) {
+      const { input: nested, ...rest } = input;
+      input = { ...(nested as Record<string, unknown>), ...rest };
+    }
+    // Stray top-level payload fields merge under input (model input wins).
+    input = { ...cleaned, ...input };
+    result.input = coerceRoomNumber(input);
+  } else if (Object.keys(cleaned).length > 0) {
+    // Flat members must not carry stray fields — put back what we removed
+    // so zod (which strips unknown keys) can still validate the outer ones.
+    Object.assign(result, cleaned);
   }
 
-  return obj;
+  return result;
 }
 
 /** Room numbers serialized as JSON numbers → strings. */

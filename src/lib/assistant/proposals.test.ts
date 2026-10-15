@@ -168,15 +168,70 @@ describe("proposalPayloadSchema", () => {
 });
 
 describe("normalizeProposalInput", () => {
-  it("wraps a flat duplicate_room shape into input", () => {
-    const normalized = normalizeProposalInput({
+  it("passes already-valid payloads through essentially unchanged", () => {
+    const raw = { action: "set_room_published", roomId: UUID1, published: true };
+    expect(normalizeProposalInput(raw)).toEqual(raw);
+
+    const nested = {
       action: "duplicate_room",
-      sourceRoomId: UUID1,
-      number: "401",
-    });
+      input: { sourceRoomId: UUID1, number: "401" },
+    };
+    expect(normalizeProposalInput(nested)).toEqual(nested);
+  });
+
+  it("resolves a missing action from a flat duplicate_room signature", () => {
+    const normalized = normalizeProposalInput({ sourceRoomId: UUID1, number: "401" });
     expect(normalized).toEqual({
       action: "duplicate_room",
       input: { sourceRoomId: UUID1, number: "401" },
+    });
+  });
+
+  it("lifts a payload nested under the action name", () => {
+    const normalized = normalizeProposalInput({
+      duplicate_room: { sourceRoomId: UUID1, number: 401 },
+    });
+    expect(proposalPayloadSchema.safeParse(normalized).success).toBe(true);
+  });
+
+  it("accepts type/op aliases and camelCase action spellings", () => {
+    const byType = normalizeProposalInput({
+      type: "duplicate_room",
+      sourceRoomId: UUID1,
+      number: "401",
+    });
+    expect(proposalPayloadSchema.safeParse(byType).success).toBe(true);
+
+    const camel = normalizeProposalInput({
+      action: "duplicateRoom",
+      sourceRoomId: UUID1,
+      number: "401",
+    });
+    expect(proposalPayloadSchema.safeParse(camel).success).toBe(true);
+  });
+
+  it("rebuilds a flat update_room into { roomId, input }", () => {
+    const normalized = normalizeProposalInput({
+      action: "update_room",
+      roomId: UUID1,
+      ...ROOM_FULL,
+    });
+    expect(normalized).toEqual({
+      action: "update_room",
+      roomId: UUID1,
+      input: ROOM_FULL,
+    });
+  });
+
+  it("keeps outer fields of flat members (set_room_amenities signature)", () => {
+    const normalized = normalizeProposalInput({
+      roomId: UUID1,
+      amenityIds: [UUID1, UUID2],
+    });
+    expect(normalized).toEqual({
+      action: "set_room_amenities",
+      roomId: UUID1,
+      amenityIds: [UUID1, UUID2],
     });
   });
 
@@ -196,9 +251,7 @@ describe("normalizeProposalInput", () => {
       action: "duplicate_room",
       input: { sourceRoomId: UUID1, number: 401 },
     });
-    expect(
-      proposalPayloadSchema.safeParse(normalized).success,
-    ).toBe(true);
+    expect(proposalPayloadSchema.safeParse(normalized).success).toBe(true);
 
     const created = normalizeProposalInput({
       action: "create_room",
@@ -207,11 +260,11 @@ describe("normalizeProposalInput", () => {
     expect(proposalPayloadSchema.safeParse(created).success).toBe(true);
   });
 
-  it("passes other actions through untouched", () => {
-    const raw = { action: "set_room_published", roomId: UUID1, published: true };
-    expect(normalizeProposalInput(raw)).toEqual(raw);
+  it("leaves unrecognized shapes untouched (for zod to reject)", () => {
     expect(normalizeProposalInput(null)).toBeNull();
     expect(normalizeProposalInput("x")).toBe("x");
+    const mystery = { banana: 1 };
+    expect(normalizeProposalInput(mystery)).toEqual(mystery);
   });
 
   it("end-to-end: flat duplicate with numeric number parses after normalization", () => {
