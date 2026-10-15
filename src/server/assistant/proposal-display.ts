@@ -37,7 +37,7 @@ export async function enrichProposalDisplay(
       return { display };
 
     case "duplicate_room": {
-      const label = await getRoomLabelForPanel(hotelId, payload.sourceRoomId);
+      const label = await getRoomLabelForPanel(hotelId, payload.input.sourceRoomId);
       if (!label) return { error: `SOURCE_${roomError}` };
       display.targetLabel = label;
       return { display };

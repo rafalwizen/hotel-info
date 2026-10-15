@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { proposalPayloadSchema } from "./proposals";
+import { normalizeProposalInput, proposalPayloadSchema } from "./proposals";
 
 const UUID1 = "0b6d8f1e-4a1a-4e3f-9c2b-7e5d1a3f9c88";
 const UUID2 = "1c7e9a2f-5b3b-4f4e-8d3c-6f4e2b5a0d99";
@@ -31,7 +31,7 @@ const SETTINGS = {
 
 const VALID: Record<string, object> = {
   create_room: { input: { number: "505", name: { pl: "Pokój rodzinny", en: "" }, floor: 2, maxGuests: 3 } },
-  duplicate_room: { sourceRoomId: UUID1, number: "401" },
+  duplicate_room: { input: { sourceRoomId: UUID1, number: "401" } },
   update_room: { roomId: UUID1, input: ROOM_FULL },
   set_room_published: { roomId: UUID1, published: false },
   set_room_amenities: { roomId: UUID1, amenityIds: [UUID1, UUID2] },
@@ -87,15 +87,15 @@ describe("proposalPayloadSchema", () => {
   it("accepts a minimal duplicate_room payload (everything but number copied)", () => {
     const parsed = proposalPayloadSchema.safeParse({
       action: "duplicate_room",
-      sourceRoomId: UUID1,
-      number: "401",
+      input: { sourceRoomId: UUID1, number: "401" },
     });
     expect(parsed.success).toBe(true);
   });
 
   it("rejects duplicate_room without a number", () => {
     expect(
-      proposalPayloadSchema.safeParse({ action: "duplicate_room", sourceRoomId: UUID1 }).success,
+      proposalPayloadSchema.safeParse({ action: "duplicate_room", input: { sourceRoomId: UUID1 } })
+        .success,
     ).toBe(false);
   });
 
@@ -164,5 +164,64 @@ describe("proposalPayloadSchema", () => {
     const actions = (json.oneOf ?? []).map((variant) => variant.properties?.action?.const);
     expect(actions).toHaveLength(25);
     expect(actions).toEqual(ALL_ACTIONS);
+  });
+});
+
+describe("normalizeProposalInput", () => {
+  it("wraps a flat duplicate_room shape into input", () => {
+    const normalized = normalizeProposalInput({
+      action: "duplicate_room",
+      sourceRoomId: UUID1,
+      number: "401",
+    });
+    expect(normalized).toEqual({
+      action: "duplicate_room",
+      input: { sourceRoomId: UUID1, number: "401" },
+    });
+  });
+
+  it("unwraps a double-nested duplicate_room input", () => {
+    const normalized = normalizeProposalInput({
+      action: "duplicate_room",
+      input: { input: { sourceRoomId: UUID1, number: "401" }, extra: "stripped-by-zod" },
+    });
+    expect(normalized).toEqual({
+      action: "duplicate_room",
+      input: { sourceRoomId: UUID1, number: "401", extra: "stripped-by-zod" },
+    });
+  });
+
+  it("coerces a JSON-number room number to a string", () => {
+    const normalized = normalizeProposalInput({
+      action: "duplicate_room",
+      input: { sourceRoomId: UUID1, number: 401 },
+    });
+    expect(
+      proposalPayloadSchema.safeParse(normalized).success,
+    ).toBe(true);
+
+    const created = normalizeProposalInput({
+      action: "create_room",
+      input: { number: 505, name: { pl: "Pokój", en: "" } },
+    });
+    expect(proposalPayloadSchema.safeParse(created).success).toBe(true);
+  });
+
+  it("passes other actions through untouched", () => {
+    const raw = { action: "set_room_published", roomId: UUID1, published: true };
+    expect(normalizeProposalInput(raw)).toEqual(raw);
+    expect(normalizeProposalInput(null)).toBeNull();
+    expect(normalizeProposalInput("x")).toBe("x");
+  });
+
+  it("end-to-end: flat duplicate with numeric number parses after normalization", () => {
+    const normalized = normalizeProposalInput({
+      action: "duplicate_room",
+      sourceRoomId: UUID1,
+      number: 401,
+      maxGuests: 3,
+    });
+    const parsed = proposalPayloadSchema.safeParse(normalized);
+    expect(parsed.success).toBe(true);
   });
 });

@@ -22,7 +22,7 @@ import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { formatSSE } from "@/lib/assistant/sse";
 import { resolveNav } from "@/lib/assistant/nav";
-import { proposalPayloadSchema } from "@/lib/assistant/proposals";
+import { normalizeProposalInput, proposalPayloadSchema } from "@/lib/assistant/proposals";
 import { trimHistory } from "@/lib/assistant/history";
 import type { AssistantContext } from "@/lib/assistant/types";
 import { getAssistantConfig, type AssistantConfig } from "@/server/assistant/config";
@@ -144,6 +144,7 @@ export async function POST(req: Request): Promise<Response> {
         if (err instanceof Anthropic.APIUserAbortError) {
           /* noop */
         } else {
+          console.error("[assistant] conversation failed", err);
           send(toErrorEvent(err));
         }
       } finally {
@@ -256,8 +257,16 @@ async function runConversation({ config, context, panel, conversation, send, sig
           });
           continue;
         }
-        const parsed = proposalPayloadSchema.safeParse(block.input);
+        const rawInput = normalizeProposalInput(block.input);
+        const parsed = proposalPayloadSchema.safeParse(rawInput);
         if (!parsed.success) {
+          const issues = parsed.error.issues
+            .slice(0, 3)
+            .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+            .join("; ");
+          console.warn(
+            `[assistant] INVALID_PAYLOAD action=${String((rawInput as { action?: unknown })?.action ?? "?")} iteration=${iteration} issues=[${issues}]`,
+          );
           results.push({
             type: "tool_result",
             tool_use_id: block.id,
@@ -268,6 +277,9 @@ async function runConversation({ config, context, panel, conversation, send, sig
         }
         const enriched = await enrichProposalDisplay(panel, parsed.data);
         if (enriched.error) {
+          console.warn(
+            `[assistant] INVALID_TARGET action=${parsed.data.action} iteration=${iteration} error=${enriched.error}`,
+          );
           results.push({
             type: "tool_result",
             tool_use_id: block.id,
@@ -304,6 +316,7 @@ async function runConversation({ config, context, panel, conversation, send, sig
         continue;
       }
 
+      console.warn(`[assistant] unknown tool name=${block.name} context=${context}`);
       results.push({
         type: "tool_result",
         tool_use_id: block.id,

@@ -132,23 +132,26 @@ function rowsFor(proposal: Proposal): Row[] {
 
     case "duplicate_room":
       return [
-        { label: "Źródło", value: proposal.display?.targetLabel ?? proposal.sourceRoomId },
-        { label: "Numer", value: proposal.number },
-        ...(proposal.name
-          ? localizedRows("Nazwa", proposal.name)
+        { label: "Źródło", value: proposal.display?.targetLabel ?? proposal.input.sourceRoomId },
+        { label: "Numer", value: proposal.input.number },
+        ...(proposal.input.name
+          ? localizedRows("Nazwa", proposal.input.name)
           : [{ label: "Nazwa (PL)", value: SAME_AS_SOURCE }]),
         {
           label: "Piętro",
           value:
-            proposal.floor === undefined
+            proposal.input.floor === undefined
               ? SAME_AS_SOURCE
-              : proposal.floor === null
+              : proposal.input.floor === null
                 ? "—"
-                : String(proposal.floor),
+                : String(proposal.input.floor),
         },
         {
           label: "Max gości",
-          value: proposal.maxGuests === undefined ? SAME_AS_SOURCE : String(proposal.maxGuests),
+          value:
+            proposal.input.maxGuests === undefined
+              ? SAME_AS_SOURCE
+              : String(proposal.input.maxGuests),
         },
         { label: "Kopiowane", value: "udogodnienia, nadpisane sekcje i kroki dojazdu" },
         { label: "Opublikowany", value: "nie — opublikujesz w edytorze" },
@@ -260,13 +263,7 @@ async function applyProposal(proposal: Proposal): Promise<ActionState | undefine
     case "create_room":
       return createRoomAction(proposal.input);
     case "duplicate_room":
-      return duplicateRoomAction({
-        sourceRoomId: proposal.sourceRoomId,
-        number: proposal.number,
-        name: proposal.name,
-        floor: proposal.floor,
-        maxGuests: proposal.maxGuests,
-      });
+      return duplicateRoomAction(proposal.input);
     case "update_room":
       return updateRoomAction(proposal.roomId, proposal.input);
     case "set_room_published":

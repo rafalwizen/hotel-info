@@ -39,9 +39,9 @@ export const proposalPayloadSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("duplicate_room").describe(
-      "Duplikuj istniejący pokój (udogodnienia, nadpisane sekcje i kroki dojazdu); number wymagany, reszta opcjonalna = kopia źródła",
+      "Duplikuj istniejący pokój (udogodnienia, nadpisane sekcje i kroki dojazdu); input.number wymagany, reszta opcjonalna = kopia źródła",
     ),
-    ...duplicateRoomSchema.shape,
+    input: duplicateRoomSchema,
   }),
   z.object({
     action: z.literal("update_room").describe(
@@ -170,6 +170,51 @@ export const proposalPayloadSchema = z.discriminatedUnion("action", [
 export type ProposalPayload = z.infer<typeof proposalPayloadSchema>;
 
 export type ProposalAction = ProposalPayload["action"];
+
+/**
+ * Tolerant pre-parser for raw model tool input. Providers keep surprising us:
+ * an extra `input` wrapper, flat `duplicate_room` args, or a JSON number
+ * where the room number is a string. Normalize the known quirks BEFORE
+ * safeParse so a near-miss proposal does not burn loop iterations.
+ */
+export function normalizeProposalInput(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const obj = { ...(raw as Record<string, unknown>) };
+
+  if (obj.action === "duplicate_room") {
+    // Extra wrapper: { action, input: { input: {...} } } → unwrap one level.
+    if (typeof obj.input === "object" && obj.input !== null && "input" in obj.input) {
+      const inner = obj.input as Record<string, unknown>;
+      const { input: nested, ...rest } = inner;
+      if (typeof nested === "object" && nested !== null) {
+        obj.input = { ...(nested as Record<string, unknown>), ...rest };
+      }
+    }
+    // Flat shape: { action, sourceRoomId, number, ... } → wrap into input.
+    if (!obj.input && ("sourceRoomId" in obj || "number" in obj)) {
+      const rest: Record<string, unknown> = { ...obj };
+      delete rest.action;
+      return { action: "duplicate_room", input: coerceRoomNumber(rest) };
+    }
+    obj.input = coerceRoomNumber(obj.input);
+  }
+
+  if (obj.action === "create_room" && typeof obj.input === "object" && obj.input !== null) {
+    obj.input = coerceRoomNumber(obj.input);
+  }
+
+  return obj;
+}
+
+/** Room numbers serialized as JSON numbers → strings. */
+function coerceRoomNumber(input: unknown): unknown {
+  if (typeof input !== "object" || input === null) return input;
+  const nested = { ...(input as Record<string, unknown>) };
+  if (typeof nested.number === "number" && Number.isFinite(nested.number)) {
+    nested.number = String(nested.number);
+  }
+  return nested;
+}
 
 /**
  * Card chrome metadata per action: risky = full-object replacement worth an
