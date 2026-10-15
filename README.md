@@ -14,6 +14,7 @@ breakfast, check-out) — bilingual PL/EN, no app, no login.
 | Auth     | Auth.js v5 (Credentials, JWT sessions)                           |
 | UI       | Tailwind v4; shadcn/ui in the panel, plain Tailwind for guests   |
 | QR       | `qrcode` — SVG for print, PNG ≥1024px for download, EC level M   |
+| Assistant| AI chat widget — z.ai GLM via Anthropic-compatible endpoint      |
 | Tests    | Vitest (unit) + Playwright (e2e, fresh dev server per run)       |
 
 ## Local development
@@ -40,6 +41,37 @@ Seed gives you `demo@hotelinfo.test` / `demo1234` and hotel `willa-mazury`
 | `npm run test`      | Vitest unit tests (no DB needed)            |
 | `npm run test:e2e`  | Playwright; boots a fresh dev server        |
 | `npm run db:*`      | drizzle-kit generate / migrate / studio, seed |
+
+## AI assistant
+
+An optional floating chat widget (`src/**/assistant/**`): on the marketing and auth
+pages it answers product questions and navigates (login, pricing, contact); in the
+panel it drafts data changes conversationally — rooms (including duplication),
+sections, arrival steps, amenities, hotel settings.
+
+Hard rule: **the model never writes to the database.** Server-side it only gets
+read-only, hotel-scoped tools (`src/server/queries/panel.ts`); mutations are drafted
+as *proposals* rendered as confirmation cards. Clicking **Zapisz** invokes the same
+server action the regular admin form uses — zod validation, `requireHotel()` scoping
+and `revalidatePath` all apply unchanged. Room deletion, reordering, binary photo
+uploads and auth operations are deliberately out of scope.
+
+Enable by setting the env below (empty key = widget hidden everywhere):
+
+| Variable               | Default                          | Purpose                                   |
+| ---------------------- | -------------------------------- | ----------------------------------------- |
+| `ASSISTANT_API_KEY`    | —                                | provider key (z.ai GLM Coding Plan works) |
+| `ASSISTANT_BASE_URL`   | `https://api.z.ai/api/anthropic` | any Anthropic-compatible endpoint         |
+| `ASSISTANT_MODEL`      | `glm-5.3-flash`                  | model id                                  |
+| `ASSISTANT_AUTH_MODE`  | `authToken`                      | `authToken` (Bearer) or `apiKey`          |
+
+Swapping to the standard z.ai platform or real Anthropic is a matter of these vars —
+no code changes. Note: statically prerendered pages bake the enabled flag at build
+time, so changing the key on Vercel requires a redeploy. Rate limits (in-memory, see
+`src/lib/rate-limit.ts`): 8 msgs / 5 min per IP (public), 30 msgs / 5 min per user
+(panel). Provider quirks of weaker models are absorbed by
+`normalizeProposalInput` (missing action discriminator, flat payloads, camelCase) —
+see `src/lib/assistant/proposals.ts`.
 
 ## Project rules (see AGENTS.md for the full list)
 
@@ -74,6 +106,8 @@ Until both exist, PRs are gated by `verify` alone.
    - `AUTH_SECRET` — `npx auth secret`
    - `GUEST_BASE_URL` — `https://<short-qr-domain>` (no trailing slash)
    - `RESEND_API_KEY` / `EMAIL_FROM` — optional, password-reset email
+   - `ASSISTANT_*` — optional, AI assistant (see "AI assistant" above);
+     empty `ASSISTANT_API_KEY` keeps the widget hidden
    - `BLOB_READ_WRITE_TOKEN` — created by step 3, do not set by hand
 3. **Storage**: Vercel console → Storage → Blob → Create database → connect it
    to this project (adds `BLOB_READ_WRITE_TOKEN`) → Redeploy. Required for
