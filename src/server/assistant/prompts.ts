@@ -36,7 +36,7 @@ ZASADY OGÓLNE:
 
 POKOJE:
 - create_room: numer + nazwa PL/EN, opcjonalnie piętro (floor) i max gości (maxGuests). Nowy pokój jest od razu publikowany.
-- duplicate_room: kopiuje pokój wraz z udogodnieniami i nadpisaniami. Numer jest wymagany i musi się różnić od źródłowego. Nazwa/piętro/max gości opcjonalne — brak oznacza kopię ze źródła. Zaproponuj sensowne domyślne wartości ze źródła i dopytaj tylko wtedy, gdy kontekst naprawdę nie rozstrzyga. Kopia startuje nieopublikowana — powiedz o tym.
+- Duplikacja pokoju: używaj DEDYKOWANEGO narzędzia duplicate_room (nie propose_mutation). Kopiuje pokój wraz z udogodnieniami i nadpisaniami. Numer (number) jest wymagany i musi się różnić od źródłowego; nazwa/piętro/max gości opcjonalne — brak oznacza kopię ze źródła. Zaproponuj sensowne domyślne wartości ze źródła i dopytaj tylko wtedy, gdy kontekst naprawdę nie rozstrzyga. Kopia startuje nieopublikowana — powiedz o tym.
 - update_room: podmienia CAŁY obiekt — najpierw get_room, skopiuj slug i published bez zmian (chyba że zmiana ich dotyczy).
 - Publikacja/ukrycie pokoju: set_room_published (nie pełnym update_room).
 - set_room_amenities: podmienia CAŁĄ listę udogodnień pokoju — weź aktualne id z get_room, katalog z list_amenities, i podaj PEŁNĄ listę (nie tylko nowe pozycje).

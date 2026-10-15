@@ -213,7 +213,43 @@ async function runConversation({ config, context, panel, conversation, send, sig
     );
 
     stream.on("text", (text) => send({ type: "text_delta", text }));
+
+    // z.ai compatibility: some compatible endpoints deliver tool arguments
+    // inside content_block_start instead of input_json_delta events — the
+    // SDK's assembled input then stays empty ({}). Capture start args so the
+    // empty case can be repaired after finalMessage().
+    const startInputs = new Map<string, unknown>();
+    stream.on("streamEvent", (event) => {
+      if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
+        const initial = event.content_block.input;
+        const hasArgs =
+          initial != null && typeof initial === "object" && Object.keys(initial).length > 0;
+        console.warn(
+          `[assistant] tool_use_start name=${event.content_block.name} idx=${event.index} startArgs=${hasArgs ? "present" : "empty"}`,
+        );
+        if (hasArgs) startInputs.set(String(event.index), initial);
+      }
+    });
+
     const final = await stream.finalMessage();
+
+    // Repair tool_use blocks with empty assembled input from the start event
+    // (content array position matches the event index).
+    final.content.forEach((block, index) => {
+      if (block.type !== "tool_use") return;
+      const assembled = block.input;
+      const isEmpty =
+        assembled == null ||
+        (typeof assembled === "object" && Object.keys(assembled).length === 0);
+      if (!isEmpty) return;
+      const startInput = startInputs.get(String(index));
+      if (startInput) {
+        console.warn(`[assistant] repaired_tool_input name=${block.name} idx=${index}`);
+        block.input = startInput;
+      } else {
+        console.warn(`[assistant] empty_tool_input name=${block.name} idx=${index}`);
+      }
+    });
 
     if (final.stop_reason !== "tool_use") {
       send({ type: "done", finish: "end_turn" });
@@ -247,7 +283,7 @@ async function runConversation({ config, context, panel, conversation, send, sig
         continue;
       }
 
-      if (block.name === "propose_mutation") {
+      if (block.name === "propose_mutation" || block.name === "duplicate_room") {
         if (!panel) {
           results.push({
             type: "tool_result",
@@ -257,7 +293,11 @@ async function runConversation({ config, context, panel, conversation, send, sig
           });
           continue;
         }
-        const rawInput = normalizeProposalInput(block.input);
+        const payloadRaw =
+          block.name === "duplicate_room"
+            ? { action: "duplicate_room", input: block.input }
+            : block.input;
+        const rawInput = normalizeProposalInput(payloadRaw);
         const parsed = proposalPayloadSchema.safeParse(rawInput);
         if (!parsed.success) {
           const issues = parsed.error.issues

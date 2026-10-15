@@ -49,13 +49,23 @@ export const roomSchema = z.object({
  * Duplicate a room: number is the one thing that cannot be copied; every
  * other override is optional — absent means "copy from the source room".
  * `floor: null` explicitly clears the floor, `undefined` copies it.
+ * Field descriptions feed the dedicated duplicate_room tool schema.
  */
 export const duplicateRoomSchema = z.object({
-  sourceRoomId: z.uuid("Nieprawidłowy identyfikator pokoju"),
-  number: createRoomSchema.shape.number,
-  name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" }).optional(),
-  floor: floorSchema.nullable().optional(),
-  maxGuests: maxGuestsSchema.optional(),
+  sourceRoomId: z
+    .uuid("Nieprawidłowy identyfikator pokoju")
+    .describe("id pokoju źródłowego (z narzędzia list_rooms)"),
+  number: createRoomSchema.shape.number.describe("numer nowego pokoju (musi się różnić od źródłowego)"),
+  name: localizedField({ max: 120, plRequired: "Nazwa pokoju (PL) jest wymagana" })
+    .optional()
+    .describe("opcjonalna nowa nazwa {pl,en} — brak oznacza kopię nazwy źródła"),
+  floor: floorSchema
+    .nullable()
+    .optional()
+    .describe("opcjonalne piętro — brak oznacza kopię ze źródła"),
+  maxGuests: maxGuestsSchema
+    .optional()
+    .describe("opcjonalna maksymalna liczba gości — brak oznacza kopię"),
 });
 
 export type CreateRoomInput = z.input<typeof createRoomSchema>;

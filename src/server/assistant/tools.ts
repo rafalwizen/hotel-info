@@ -17,6 +17,7 @@ import { z } from "zod";
 import { NAV_INTENTS } from "@/lib/assistant/nav";
 import { proposalPayloadSchema } from "@/lib/assistant/proposals";
 import { SECTION_ICONS } from "@/lib/icons";
+import { duplicateRoomSchema } from "@/lib/validation/room";
 import {
   getArrivalStepByIdForPanel,
   getHotelInfoShape,
@@ -55,8 +56,21 @@ export const navigateTool: Anthropic.Tool = {
 export const proposeMutationTool: Anthropic.Tool = {
   name: "propose_mutation",
   description:
-    "Przygotuj zmianę do zatwierdzenia przez użytkownika. Rodziny akcji: pokoje (create_room, duplicate_room, update_room, set_room_published, set_room_amenities), sekcje (szablony pokoi, sekcje hotelu, nadpisania/ukrycia/dodatkowe per pokój), dojazd (kroki hotelowe i per pokój, mapa), udogodnienia, ustawienia hotelu. Nic nie zapisujesz — użytkownik zobaczy kartę z danymi i przycisk Zapisz. Przed EDYCJĄ pobierz aktualny stan (get_room / get_section / get_arrival_step / get_hotel_info) i skopiuj niezmienione pola.",
+    "Przygotuj zmianę do zatwierdzenia przez użytkownika. Rodziny akcji: pokoje (create_room, update_room, set_room_published, set_room_amenities), sekcje (szablony pokoi, sekcje hotelu, nadpisania/ukrycia/dodatkowe per pokój), dojazd (kroki hotelowe i per pokój, mapa), udogodnienia, ustawienia hotelu. DO DUPLIKACJI POKOJU używaj dedykowanego narzędzia duplicate_room. Nic nie zapisujesz — użytkownik zobaczy kartę z danymi i przycisk Zapisz. Przed EDYCJĄ pobierz aktualny stan (get_room / get_section / get_arrival_step / get_hotel_info) i skopiuj niezmienione pola.",
   input_schema: toInputSchema(proposalPayloadSchema),
+};
+
+/**
+ * Dedicated single-purpose tool: small flat schema the model can call
+ * reliably (the 25-variant propose_mutation union proved too heavy for
+ * GLM-flash, which emitted empty arguments). Routed through the same
+ * proposal pipeline in the route handler.
+ */
+export const duplicateRoomTool: Anthropic.Tool = {
+  name: "duplicate_room",
+  description:
+    "Duplikuj istniejący pokój wraz z udogodnieniami, nadpisanymi sekcjami i krokami dojazdu. sourceRoomId z list_rooms; number nowego pokoju wymagany; nazwa/piętro/max gości opcjonalne (brak = kopia ze źródła). Kopia startuje nieopublikowana — nic nie zapisujesz, użytkownik zatwierdza kartę.",
+  input_schema: toInputSchema(duplicateRoomSchema),
 };
 
 const readToolSpecs: Anthropic.Tool[] = [
@@ -118,6 +132,7 @@ export const PANEL_READ_TOOLS = new Set(readToolSpecs.map((tool) => tool.name));
 
 export const panelTools: Anthropic.Tool[] = [
   navigateTool,
+  duplicateRoomTool,
   proposeMutationTool,
   ...readToolSpecs,
 ];
