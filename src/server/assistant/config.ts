@@ -28,7 +28,12 @@ export function getAssistantConfig(): AssistantConfig | null {
   };
 }
 
-/** Server-component gate used by layouts mounting the widget. */
+/**
+ * Server-component gate used by layouts mounting the widget.
+ * `ASSISTANT_ENABLED=false` is a hard off-switch that keeps the key stored —
+ * flipping it back to "true" (or removing the var) re-enables the widget.
+ */
 export function assistantEnabled(): boolean {
+  if (process.env.ASSISTANT_ENABLED === "false") return false;
   return getAssistantConfig() !== null;
 }

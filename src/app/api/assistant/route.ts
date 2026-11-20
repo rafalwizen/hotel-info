@@ -25,7 +25,7 @@ import { resolveNav } from "@/lib/assistant/nav";
 import { normalizeProposalInput, proposalPayloadSchema } from "@/lib/assistant/proposals";
 import { trimHistory } from "@/lib/assistant/history";
 import type { AssistantContext } from "@/lib/assistant/types";
-import { getAssistantConfig, type AssistantConfig } from "@/server/assistant/config";
+import { assistantEnabled, getAssistantConfig, type AssistantConfig } from "@/server/assistant/config";
 import { enqueueAssistantCall, getAssistantClient } from "@/server/assistant/client";
 import { panelSystemPrompt, publicSystemPrompt } from "@/server/assistant/prompts";
 import { enrichProposalDisplay } from "@/server/assistant/proposal-display";
@@ -83,6 +83,11 @@ function toErrorEvent(err: unknown): { type: "error"; message: string; retry: bo
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // assistantEnabled() honors the ASSISTANT_ENABLED=false off-switch too —
+  // the widget being hidden must not leave a callable endpoint behind.
+  if (!assistantEnabled()) {
+    return Response.json({ error: "assistant-disabled" }, { status: 501 });
+  }
   const config = getAssistantConfig();
   if (!config) {
     return Response.json({ error: "assistant-disabled" }, { status: 501 });

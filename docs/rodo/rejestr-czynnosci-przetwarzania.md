@@ -22,7 +22,8 @@ Wewnętrzny dokument zgodności (RODO art. 30 ust. 1–2). Administrator: stałe
 - **Asystent (wiersze 5–6)**: transfer do z.ai bez instrumentu z art. 46 RODO —
   wyjątek świadomy, ujawniony w polityce prywatności (pkt 4) i w UI asystenta.
   Środki minimalizujące: brak identyfikatorów użytkownika w payloadzie,
-  temperature 0, limit 16 wiad./24 000 znaków, kill-switch `ASSISTANT_API_KEY`.
+  temperature 0, limit 16 wiad./24 000 znaków, kill-switch
+  `ASSISTANT_ENABLED="false"` (asystent aktualnie wyłączony tą flagą).
 - **Art. 30 ust. 5**: dokument udostępniany na żądanie organu nadzorczego
   (UODO).
 - Nie prowadzimy zautomatyzowanego podejmowania decyzji (art. 22) ani

@@ -60,6 +60,7 @@ Enable by setting the env below (empty key = widget hidden everywhere):
 
 | Variable               | Default                          | Purpose                                   |
 | ---------------------- | -------------------------------- | ----------------------------------------- |
+| `ASSISTANT_ENABLED`    | `true`                           | `"false"` = hard off-switch (API returns 501, widget hidden; key stays stored) |
 | `ASSISTANT_API_KEY`    | —                                | provider key (z.ai GLM Coding Plan works) |
 | `ASSISTANT_BASE_URL`   | `https://api.z.ai/api/anthropic` | any Anthropic-compatible endpoint         |
 | `ASSISTANT_MODEL`      | `glm-5.3-flash`                  | model id                                  |
@@ -86,8 +87,9 @@ see `src/lib/assistant/proposals.ts`.
   `docs/rodo/lista-podprocesorow.md` (processors + the z.ai transfer risk).
 - **Known transfer risk**: the AI assistant sends conversations (and, in panel
   mode, hotel context incl. wifi credentials) to z.ai — no EU adequacy, no
-  SCCs. Disclosed in the privacy policy and the chat UI. Kill-switch: unset
-  `ASSISTANT_API_KEY`. Swap provider via `ASSISTANT_BASE_URL`.
+  SCCs. Disclosed in the privacy policy and the chat UI. Kill-switch:
+  `ASSISTANT_ENABLED="false"` (or unset `ASSISTANT_API_KEY`). Swap provider
+  via `ASSISTANT_BASE_URL`.
 - Cookies: only the strictly-necessary Auth.js session cookie — no consent
   banner. If analytics are ever added, a consent gate is required first.
 

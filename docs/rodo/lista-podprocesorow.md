@@ -20,8 +20,9 @@ Kolejność alfabetyczna.
   identyfikatory użytkowników NIE są przesyłane.
 - Środki zaradcze zastosowane: pełne ujawnienie w polityce prywatności
   (pkt 4), adnotacja w UI asystenta, brak persystencji rozmów po stronie
-  serwera, minimizacja payloadu, kill-switch (usunięcie `ASSISTANT_API_KEY`
-  ukrywa asystenta z UI).
+  serwera, minimizacja payloadu, kill-switch (`ASSISTANT_ENABLED="false"`
+  ukrywa asystenta i wyłącza API; alternatywnie usunięcie
+  `ASSISTANT_API_KEY`).
 - Rekomendacja docelowa: migracja na dostawcę z SCC/DPA (np. Anthropic —
   endpoint wymienia się zmienną `ASSISTANT_BASE_URL`, bez zmian kodu:
   `src/server/assistant/config.ts`).
