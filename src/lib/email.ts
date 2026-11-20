@@ -9,8 +9,10 @@ export async function sendEmail(opts: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
+    // Log metadata only — the HTML contains the reset link/token, which must
+    // never land in logs (dev convenience is not worth a credential leak).
     console.log(`[dev:email] to=${opts.to} subject="${opts.subject}"`);
-    console.log(opts.html);
+    console.log("[dev:email] html omitted (contains reset link)");
     return;
   }
 

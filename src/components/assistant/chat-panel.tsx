@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AssistantContext } from "@/lib/assistant/types";
@@ -169,6 +170,18 @@ export function ChatPanel({
             {MAX_INPUT_CHARS - draft.length}
           </p>
         ) : null}
+        {/* RODO: conversations are processed by an external LLM provider
+            outside the EEA — the disclosure must stay permanently visible. */}
+        <p className="mt-1 text-center text-[11px] leading-snug text-muted-foreground">
+          Rozmowy przetwarzane przez zewnętrznego dostawcę AI (transfer poza
+          EOG).{" "}
+          <Link
+            href="/polityka-prywatnosci"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            Polityka prywatności
+          </Link>
+        </p>
       </div>
     </div>
   );

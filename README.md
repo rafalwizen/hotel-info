@@ -73,6 +73,24 @@ time, so changing the key on Vercel requires a redeploy. Rate limits (in-memory,
 `normalizeProposalInput` (missing action discriminator, flat payloads, camelCase) —
 see `src/lib/assistant/proposals.ts`.
 
+## RODO (GDPR) compliance
+
+- **Legal pages**: `/polityka-prywatnosci` and `/regulamin` (marketing group,
+  Polish). Controller identity lives in `src/lib/site.ts` (`OPERATOR_*`
+  constants) — fill in the real address before launch; `LEGAL_UPDATED` bumps
+  the "last updated" date.
+- **Data subject rights**: panel → Ustawienia → "Konto i data" — JSON export
+  (art. 15/20) and account deletion (art. 17) in
+  `src/server/actions/account.ts`.
+- **Docs**: `docs/rodo/rejestr-czynnosci-przetwarzania.md` (art. 30 register),
+  `docs/rodo/lista-podprocesorow.md` (processors + the z.ai transfer risk).
+- **Known transfer risk**: the AI assistant sends conversations (and, in panel
+  mode, hotel context incl. wifi credentials) to z.ai — no EU adequacy, no
+  SCCs. Disclosed in the privacy policy and the chat UI. Kill-switch: unset
+  `ASSISTANT_API_KEY`. Swap provider via `ASSISTANT_BASE_URL`.
+- Cookies: only the strictly-necessary Auth.js session cookie — no consent
+  banner. If analytics are ever added, a consent gate is required first.
+
 ## Project rules (see AGENTS.md for the full list)
 
 - Every admin/server query starts with `requireHotel()` and filters by `hotelId`.

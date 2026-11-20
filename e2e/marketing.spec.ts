@@ -14,7 +14,9 @@ test.describe("marketing", () => {
     // Hero QR is generated client-side after mount — wait for the SVG.
     await expect(page.locator("[data-hero-qr] svg")).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole("link", { name: "Wypróbuj 14 dni za darmo" }).first().click();
+    // Landing CTAs say "Wypróbuj za darmo" (the "14 dni" variant lives on
+    // /cennik and /kontakt); first() picks the header CTA.
+    await page.getByRole("link", { name: "Wypróbuj za darmo" }).first().click();
     await expect(page).toHaveURL(/\/rejestracja$/);
   });
 
