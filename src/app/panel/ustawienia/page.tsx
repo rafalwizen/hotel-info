@@ -1,15 +1,17 @@
 import { asc, eq } from "drizzle-orm";
+import Link from "next/link";
 import { db } from "@/db";
 import { hotelSections } from "@/db/schema";
 import { requireHotel } from "@/server/tenancy";
 import { HotelSettingsForm } from "@/components/admin/hotel-settings-form";
 import { SectionsEditor } from "@/components/admin/sections-editor";
+import { DeleteAccountForm, ExportAccountButton } from "@/components/admin/account-tools";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = { title: "Ustawienia — Hotel Info" };
 
 export default async function SettingsPage() {
-  const { hotel } = await requireHotel();
+  const { user, hotel } = await requireHotel();
 
   const sections = await db
     .select()
@@ -72,6 +74,29 @@ export default async function SettingsPage() {
               enabled: section.enabled,
             }))}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Konto i dane</CardTitle>
+          <CardDescription>
+            Twoje prawa z RODO: pobierz kopię swoich danych lub trwale usuń
+            konto. Szczegóły w{" "}
+            <Link
+              href="/polityka-prywatnosci"
+              className="font-medium underline underline-offset-4"
+            >
+              polityce prywatności
+            </Link>
+            .
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          <ExportAccountButton />
+          <div className="border-t border-border pt-6">
+            <DeleteAccountForm email={user.email} />
+          </div>
         </CardContent>
       </Card>
     </>
