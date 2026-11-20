@@ -6,6 +6,19 @@ import { expect, type Page } from "@playwright/test";
  * on each other or on prior runs.
  */
 
+/** Fills the signup form (terms checkbox included) and submits. */
+export async function signUp(
+  page: Page,
+  { name, email, password }: { name: string; email: string; password: string },
+) {
+  await page.goto("/rejestracja");
+  await page.getByLabel("Imię").fill(name);
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Hasło").fill(password);
+  await page.getByLabel(/Akceptuję/).check();
+  await page.getByRole("button", { name: "Utwórz konto" }).click();
+}
+
 export type CreatedHotel = {
   email: string;
   hotelName: string;
@@ -20,11 +33,7 @@ export async function createHotel(
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const email = `e2e-hotel-${stamp}@hotelinfo.test`;
 
-  await page.goto("/rejestracja");
-  await page.getByLabel("Imię").fill("E2E Owner");
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Hasło").fill("supertajne8");
-  await page.getByRole("button", { name: "Utwórz konto" }).click();
+  await signUp(page, { name: "E2E Owner", email, password: "supertajne8" });
   // Cold dev server: the first signup compiles the route + action round trip
   await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
 

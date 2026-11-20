@@ -40,6 +40,7 @@ async function main() {
       email: "demo@hotelinfo.test",
       passwordHash: await bcrypt.hash("demo1234", 12),
       name: "Jan Demo",
+      termsAcceptedAt: new Date(),
     })
     .returning();
 

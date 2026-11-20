@@ -7,6 +7,8 @@ export const signupSchema = z.object({
   name: z.string().trim().min(2, "Podaj imię (min. 2 znaki)").max(100),
   email: z.email("Podaj poprawny adres e-mail").max(255).transform((v) => v.toLowerCase()),
   password: z.string().min(8, "Hasło musi mieć min. 8 znaków").max(100),
+  // Consent timestamp: proof of terms acceptance is persisted server-side.
+  terms: z.literal(true, { error: "Zaakceptuj regulamin i politykę prywatności" }),
 });
 
 export const loginSchema = z.object({

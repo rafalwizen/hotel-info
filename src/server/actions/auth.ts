@@ -51,6 +51,8 @@ export async function signupAction(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    // Unchecked checkbox sends no field at all — normalize to boolean.
+    terms: formData.get("terms") === "on",
   });
   if (!parsed.success) {
     return { error: firstFieldError(parsed.error) ?? "Sprawdź poprawność danych" };
@@ -60,7 +62,7 @@ export async function signupAction(
   const passwordHash = await hashPassword(password);
 
   try {
-    await db.insert(users).values({ email, name, passwordHash });
+    await db.insert(users).values({ email, name, passwordHash, termsAcceptedAt: new Date() });
   } catch (err) {
     if (
       err instanceof Error &&

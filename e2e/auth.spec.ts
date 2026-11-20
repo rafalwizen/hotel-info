@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createHotel } from "./helpers";
+import { createHotel, signUp } from "./helpers";
 
 /**
  * Self-contained tests: each test generates its own email INSIDE the test
@@ -9,11 +9,7 @@ import { createHotel } from "./helpers";
 test.describe("auth flow", () => {
   test("signup creates session and lands on onboarding", async ({ page }) => {
     const email = `e2e-signup-${Date.now()}@hotelinfo.test`;
-    await page.goto("/rejestracja");
-    await page.getByLabel("Imię").fill("E2E Test");
-    await page.getByLabel("E-mail").fill(email);
-    await page.getByLabel("Hasło").fill("supertajne8");
-    await page.getByRole("button", { name: "Utwórz konto" }).click();
+    await signUp(page, { name: "E2E Test", email, password: "supertajne8" });
 
     // No hotel yet — the panel routes redirect to the onboarding wizard.
     // Cold dev server: first signup pays the route-compilation cost.
@@ -22,6 +18,16 @@ test.describe("auth flow", () => {
     // Reaching /panel/start already proves the session (proxy redirects
     // anonymous users to /zaloguj).
     await expect(page.getByText("Skonfiguruj swój hotel")).toBeVisible();
+  });
+
+  test("signup without terms acceptance is blocked", async ({ page }) => {
+    await page.goto("/rejestracja");
+    await page.getByLabel("Imię").fill("E2E No Terms");
+    await page.getByLabel("E-mail").fill(`e2e-noterms-${Date.now()}@hotelinfo.test`);
+    await page.getByLabel("Hasło").fill("supertajne8");
+    // Terms checkbox left unchecked — native required validation blocks submit.
+    await page.getByRole("button", { name: "Utwórz konto" }).click();
+    await expect(page).toHaveURL(/\/rejestracja$/);
   });
 
   test("panel requires session (proxy redirect)", async ({ page }) => {
@@ -36,11 +42,7 @@ test.describe("auth flow", () => {
     const password = "supertajne8";
 
     // Create the account this test will log into
-    await page.goto("/rejestracja");
-    await page.getByLabel("Imię").fill("E2E Login");
-    await page.getByLabel("E-mail").fill(email);
-    await page.getByLabel("Hasło").fill(password);
-    await page.getByRole("button", { name: "Utwórz konto" }).click();
+    await signUp(page, { name: "E2E Login", email, password });
     // Under parallel-suite load the signup -> /panel -> /panel/start redirect
     // chain pays the route-compilation cost (same as the first-signup test).
     await expect(page).toHaveURL(/\/panel\/start$/, { timeout: 20_000 });
