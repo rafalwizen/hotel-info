@@ -17,6 +17,13 @@ const FOOTER_SECTIONS = [
       { href: "/panel", label: "Panel" },
     ],
   },
+  {
+    title: "Informacje",
+    links: [
+      { href: "/polityka-prywatnosci", label: "Polityka prywatności" },
+      { href: "/regulamin", label: "Regulamin" },
+    ],
+  },
 ];
 
 export function SiteFooter() {

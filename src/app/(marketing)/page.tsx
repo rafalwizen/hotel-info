@@ -176,7 +176,7 @@ export default function LandingPage() {
       {/* Trust strip — honest signals only; real owner quotes come later. */}
       <section className="border-y border-neutral-200">
         <p className="mx-auto w-full max-w-6xl px-5 py-4 text-center font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-500 md:px-8">
-          Wsparcie po polsku · Dane hostowane w UE · 14 dni bez karty kredytowej
+          Wsparcie po polsku · Baza danych hostowana w UE · 14 dni bez karty kredytowej
         </p>
       </section>
 

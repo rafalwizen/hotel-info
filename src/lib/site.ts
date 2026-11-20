@@ -8,6 +8,19 @@
 export const CONTACT_EMAIL = "kontakt@hotelinfo.pl";
 
 /**
+ * Data controller identity used in the privacy policy and terms (RODO art. 13).
+ * ADDRESS is a placeholder — fill it in before launch; every legal page reads
+ * these constants so there is exactly one place to update.
+ */
+export const OPERATOR_NAME = "Rafał Wiżeń";
+export const OPERATOR_LEGAL_FORM = "osoba fizyczna";
+export const OPERATOR_ADDRESS = "[ADRES DO UZUPEŁNIENIA]";
+export const OPERATOR_EMAIL = CONTACT_EMAIL;
+
+/** Last-update date shown in the legal pages footer. */
+export const LEGAL_UPDATED = "2026-11-20";
+
+/**
  * Demo guest URLs displayed in marketing mocks (sticker fallback, arrival
  * SMS). Built from GUEST_BASE_URL (baked at build time — set on Vercel) so
  * the mocks always point at a live guest page; the localhost fallback keeps

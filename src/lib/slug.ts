@@ -13,6 +13,9 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   // Marketing routes
   "cennik",
   "kontakt",
+  // Legal pages
+  "polityka-prywatnosci",
+  "regulamin",
   // Infra / well-known paths that must never resolve to a hotel
   "_next",
   "static",
